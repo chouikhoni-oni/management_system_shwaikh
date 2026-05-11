@@ -807,6 +807,10 @@
             security: 'الأمان',
             data_encrypted: 'البيانات مشفرة بتقنية AES-256',
             menu: 'القائمة',
+            change_phone: 'تغيير رقم الهاتف',
+            current_phone: 'الرقم الحالي',
+            new_phone: 'رقم الهاتف الجديد',
+            phone_changed: 'تم تغيير رقم الهاتف بنجاح',
         },
         en: {
             dir: 'ltr',
@@ -974,6 +978,10 @@
             security: 'Security',
             data_encrypted: 'Data encrypted with AES-256',
             menu: 'Menu',
+            change_phone: 'Change Phone Number',
+            current_phone: 'Current Number',
+            new_phone: 'New Phone Number',
+            phone_changed: 'Phone number changed successfully',
         }
     };
 
@@ -1610,16 +1618,9 @@
                     <i class="fas fa-sign-in-alt me-2"></i>${t('login_btn')}
                 </button>
                 
-                <button onclick="biometricLogin()" class="w-full bg-slate-800 hover:bg-slate-900 text-white py-4 rounded-2xl font-bold text-lg shadow-lg transition mb-6">
+                <button onclick="biometricLogin()" class="w-full bg-slate-800 hover:bg-slate-900 text-white py-4 rounded-2xl font-bold text-lg shadow-lg transition">
                     <i class="fas fa-fingerprint me-2"></i>${t('biometric_login')}
                 </button>
-                
-
-                
-                <div class="bg-amber-50 border-2 border-amber-100 rounded-2xl p-4 text-center">
-                    <p class="text-xs text-amber-600 font-semibold mb-1">${t('demo_account')}</p>
-                    <p class="text-sm text-amber-900 font-bold font-mono">0550000000 / 1234</p>
-                </div>
             </div>
         </div>`;
     }
@@ -2753,6 +2754,22 @@
                         <span class="text-green-600 font-bold text-2xl"><i class="fas fa-check-circle"></i></span>
                     </div>
                     
+                    <!-- تغيير رقم الهاتف -->
+                    <div class="p-4 bg-gray-50 rounded-2xl">
+                        <div class="flex items-center gap-3 mb-4">
+                            <div class="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center">
+                                <i class="fas fa-phone-alt text-blue-600"></i>
+                            </div>
+                            <div>
+                                <span class="font-bold text-gray-800">${t('change_phone')}</span>
+                                <p class="text-xs text-gray-500">${t('current_phone')}: <span class="font-mono font-bold text-gray-700" dir="ltr">${user.phone}</span></p>
+                            </div>
+                        </div>
+                        <input id="set-newphone" placeholder="${t('new_phone')}" class="w-full border-2 p-3 rounded-xl mb-3 outline-none focus:border-blue-500" dir="ltr">
+                        <input id="set-phonepass" type="password" placeholder="${t('current_password')}" class="w-full border-2 p-3 rounded-xl mb-4 outline-none focus:border-blue-500">
+                        <button onclick="changePhone()" class="w-full bg-gradient-to-r from-blue-500 to-indigo-600 text-white py-3 rounded-xl font-bold shadow-lg hover:opacity-90 transition">${t('save')}</button>
+                    </div>
+                    
                     <!-- تغيير كلمة المرور -->
                     <div class="p-4 bg-gray-50 rounded-2xl">
                         <div class="flex items-center gap-3 mb-4">
@@ -2783,6 +2800,19 @@
         user = u;
         saveAll();
         showToast(t('save'), 'success');
+    }
+
+    function changePhone() {
+        const newPhone = document.getElementById('set-newphone').value.trim();
+        const pass = document.getElementById('set-phonepass').value;
+        if (!newPhone || !pass) return showToast(t('fill_fields'), 'error');
+        if (btoa(pass) !== user.pass) return showToast(t('wrong_credentials'), 'error');
+        if (DB.find(x => x.phone === newPhone && x.id !== user.id)) return showToast(t('phone_exists'), 'error');
+        const u = DB.find(x => x.id === user.id);
+        u.phone = newPhone;
+        user = u;
+        saveAll();
+        showToast(t('phone_changed'), 'success');
     }
 
     // === عرض حساب العميل (غير المدير) ===
