@@ -1,0 +1,2809 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>شويخ - نظام إدارة الأموال المتقدم</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800;900&family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+
+        :root {
+            --primary: #1e3a5f;
+            --primary-light: #2d5a8e;
+            --accent: #f59e0b;
+            --accent-light: #fbbf24;
+            --success: #10b981;
+            --danger: #ef4444;
+            --info: #3b82f6;
+            --dark: #0f172a;
+            --glass: rgba(255,255,255,0.08);
+            --glass-border: rgba(255,255,255,0.12);
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        
+        body {
+            font-family: 'Cairo', 'Inter', sans-serif;
+            background: #f0f2f5;
+            overflow-x: hidden;
+        }
+
+        body.en { font-family: 'Inter', 'Cairo', sans-serif; direction: ltr; }
+
+        .glass-card {
+            background: rgba(255,255,255,0.95);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255,255,255,0.3);
+        }
+
+        .dark-glass {
+            background: linear-gradient(135deg, rgba(15,23,42,0.97), rgba(30,58,95,0.95));
+            backdrop-filter: blur(30px);
+        }
+
+        .gradient-primary {
+            background: linear-gradient(135deg, #1e3a5f 0%, #2d5a8e 50%, #1e3a5f 100%);
+        }
+
+        .gradient-gold {
+            background: linear-gradient(135deg, #f59e0b, #d97706, #f59e0b);
+        }
+
+        .gradient-success {
+            background: linear-gradient(135deg, #059669, #10b981, #34d399);
+        }
+
+        .gradient-danger {
+            background: linear-gradient(135deg, #dc2626, #ef4444, #f87171);
+        }
+
+        .card-hover {
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .card-hover:hover {
+            transform: translateY(-6px);
+            box-shadow: 0 25px 60px rgba(0,0,0,0.15);
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        .slide-up {
+            animation: slideUp 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .slide-right {
+            animation: slideRight 0.5s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(40px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes slideRight {
+            from { opacity: 0; transform: translateX(-30px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        @keyframes pulse-glow {
+            0%, 100% { box-shadow: 0 0 20px rgba(245,158,11,0.3); }
+            50% { box-shadow: 0 0 40px rgba(245,158,11,0.6); }
+        }
+
+        @keyframes shimmer {
+            0% { background-position: -200% center; }
+            100% { background-position: 200% center; }
+        }
+
+        .shimmer-text {
+            background: linear-gradient(90deg, #f59e0b 25%, #fde68a 50%, #f59e0b 75%);
+            background-size: 200% auto;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: shimmer 3s linear infinite;
+        }
+
+        .floating {
+            animation: float 6s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .sidebar {
+            width: 280px;
+            min-height: 100vh;
+            transition: all 0.3s ease;
+        }
+
+        .sidebar.collapsed {
+            width: 80px;
+        }
+
+        .sidebar.collapsed .sidebar-text {
+            display: none;
+        }
+
+        .main-content {
+            margin-right: 280px;
+            transition: all 0.3s ease;
+            min-height: 100vh;
+        }
+
+        .main-content.expanded {
+            margin-right: 80px;
+        }
+
+        .nav-item {
+            transition: all 0.3s ease;
+            border-radius: 12px;
+            margin: 4px 12px;
+        }
+
+        .nav-item:hover, .nav-item.active {
+            background: rgba(245,158,11,0.15);
+            color: #f59e0b;
+        }
+
+        .nav-item.active {
+            border-right: 4px solid #f59e0b;
+        }
+
+        .stat-card {
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+            border-radius: 50%;
+        }
+
+        .progress-ring {
+            transform: rotate(-90deg);
+        }
+
+        .scrollbar-thin::-webkit-scrollbar { width: 6px; }
+        .scrollbar-thin::-webkit-scrollbar-track { background: transparent; }
+        .scrollbar-thin::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.15); border-radius: 10px; }
+        .scrollbar-thin::-webkit-scrollbar-thumb:hover { background: rgba(0,0,0,0.25); }
+
+        .modal-overlay {
+            animation: fadeIn 0.3s ease;
+        }
+
+        .modal-content {
+            animation: slideUp 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .biometric-icon {
+            animation: pulse-glow 2s ease-in-out infinite;
+        }
+
+        .toggle-switch {
+            width: 52px;
+            height: 28px;
+            background: #d1d5db;
+            border-radius: 14px;
+            position: relative;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .toggle-switch.active {
+            background: #10b981;
+        }
+
+        .toggle-switch::after {
+            content: '';
+            position: absolute;
+            width: 22px;
+            height: 22px;
+            background: white;
+            border-radius: 50%;
+            top: 3px;
+            right: 3px;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .toggle-switch.active::after {
+            right: 27px;
+        }
+
+        body.en .toggle-switch::after {
+            right: auto;
+            left: 3px;
+        }
+
+        body.en .toggle-switch.active::after {
+            left: 27px;
+            right: auto;
+        }
+
+        .badge-pulse {
+            animation: badge-pulse 2s infinite;
+        }
+
+        @keyframes badge-pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        @media (max-width: 1024px) {
+            .sidebar {
+                position: fixed;
+                right: 0;
+                top: 0;
+                z-index: 50;
+                transform: translateX(100%);
+            }
+            .sidebar.mobile-open {
+                transform: translateX(0);
+            }
+            .main-content, .main-content.expanded {
+                margin-right: 0;
+            }
+            body.en .sidebar {
+                right: auto;
+                left: 0;
+                transform: translateX(-100%);
+            }
+            body.en .sidebar.mobile-open {
+                transform: translateX(0);
+            }
+        }
+
+        .invoice-paper {
+            background: repeating-linear-gradient(
+                0deg,
+                transparent,
+                transparent 27px,
+                #e5e7eb 28px
+            );
+        }
+
+        .encrypted-badge {
+            background: linear-gradient(135deg, #059669, #10b981);
+            font-size: 10px;
+            padding: 2px 8px;
+            border-radius: 20px;
+            color: white;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 300px;
+        }
+
+        @media print {
+            .no-print { display: none !important; }
+            .print-only { display: block !important; }
+            body { background: white; }
+            .main-content { margin: 0; }
+        }
+    </style>
+</head>
+<body class="bg-gray-100">
+    <div id="app"></div>
+    <div id="modal-root"></div>
+
+    <script>
+    // ============================================================
+    //  شويخ - نظام إدارة الأموال المتقدم
+    //  Chouikh - Advanced Money Management System
+    // ============================================================
+
+    // === التشفير AES-256 ===
+    const CryptoEngine = {
+        _key: null,
+        
+        async getKey() {
+            if (this._key) return this._key;
+            let stored = localStorage.getItem('chouikh_master_key');
+            if (stored) {
+                const raw = Uint8Array.from(atob(stored), c => c.charCodeAt(0));
+                this._key = await crypto.subtle.importKey('raw', raw, 'AES-GCM', false, ['encrypt', 'decrypt']);
+            } else {
+                this._key = await crypto.subtle.generateKey({ name: 'AES-GCM', length: 256 }, true, ['encrypt', 'decrypt']);
+                const exported = await crypto.subtle.exportKey('raw', this._key);
+                localStorage.setItem('chouikh_master_key', btoa(String.fromCharCode(...new Uint8Array(exported))));
+            }
+            return this._key;
+        },
+
+        async encrypt(data) {
+            try {
+                const key = await this.getKey();
+                const iv = crypto.getRandomValues(new Uint8Array(12));
+                const encoded = new TextEncoder().encode(JSON.stringify(data));
+                const cipher = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, encoded);
+                return {
+                    iv: btoa(String.fromCharCode(...iv)),
+                    data: btoa(String.fromCharCode(...new Uint8Array(cipher)))
+                };
+            } catch (e) {
+                console.error('Encryption error:', e);
+                return null;
+            }
+        },
+
+        async decrypt(payload) {
+            try {
+                const key = await this.getKey();
+                const iv = Uint8Array.from(atob(payload.iv), c => c.charCodeAt(0));
+                const data = Uint8Array.from(atob(payload.data), c => c.charCodeAt(0));
+                const decrypted = await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, key, data);
+                return JSON.parse(new TextDecoder().decode(decrypted));
+            } catch (e) {
+                console.error('Decryption error:', e);
+                return null;
+            }
+        }
+    };
+
+    // === المصادقة البيومترية ===
+    const BiometricAuth = {
+        available: false,
+
+        async check() {
+            if (window.PublicKeyCredential) {
+                try {
+                    this.available = await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
+                } catch { this.available = false; }
+            }
+            return this.available;
+        },
+
+        async authenticate() {
+            if (!this.available) return { success: false, msg: t('biometric_not_available') };
+            try {
+                const challenge = crypto.getRandomValues(new Uint8Array(32));
+                const credential = await navigator.credentials.create({
+                    publicKey: {
+                        challenge,
+                        rp: { name: 'Chouikh Finance', id: location.hostname || 'localhost' },
+                        user: {
+                            id: crypto.getRandomValues(new Uint8Array(16)),
+                            name: 'user@chouikh',
+                            displayName: 'Chouikh User'
+                        },
+                        pubKeyCredParams: [{ alg: -7, type: 'public-key' }],
+                        authenticatorSelection: {
+                            authenticatorAttachment: 'platform',
+                            userVerification: 'required'
+                        },
+                        timeout: 60000
+                    }
+                });
+                return { success: !!credential, msg: credential ? t('biometric_success') : t('biometric_fail') };
+            } catch (e) {
+                return { success: false, msg: t('biometric_cancelled') };
+            }
+        },
+
+        async verify() {
+            if (!this.available) return { success: false };
+            try {
+                const challenge = crypto.getRandomValues(new Uint8Array(32));
+                const assertion = await navigator.credentials.get({
+                    publicKey: {
+                        challenge,
+                        timeout: 60000,
+                        userVerification: 'required'
+                    }
+                });
+                return { success: !!assertion };
+            } catch {
+                return { success: false };
+            }
+        }
+    };
+
+    // === النسخ الاحتياطي السحابي ===
+    const CloudBackup = {
+        async export() {
+            const data = {
+                version: '3.0',
+                date: new Date().toISOString(),
+                app: 'Chouikh Finance',
+                db: DB,
+                wallets: WALLETS,
+                invoices: INVOICES,
+                categories: CATEGORIES,
+                settings: SETTINGS
+            };
+            const encrypted = await CryptoEngine.encrypt(data);
+            const blob = new Blob([JSON.stringify(encrypted)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `chouikh_backup_${new Date().toISOString().slice(0,10)}.enc.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+            showToast(t('backup_exported'), 'success');
+        },
+
+        async import() {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.json';
+            input.onchange = async (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+                try {
+                    const text = await file.text();
+                    const encrypted = JSON.parse(text);
+                    if (encrypted.iv && encrypted.data) {
+                        const decrypted = await CryptoEngine.decrypt(encrypted);
+                        if (decrypted && decrypted.db) {
+                            DB = decrypted.db;
+                            WALLETS = decrypted.wallets || [];
+                            INVOICES = decrypted.invoices || [];
+                            CATEGORIES = decrypted.categories || defaultCategories();
+                            saveAll();
+                            showToast(t('backup_restored'), 'success');
+                            return;
+                        }
+                    }
+                    // fallback: unencrypted json
+                    const plain = encrypted.db ? encrypted : { db: JSON.parse(text) };
+                    DB = plain.db || DB;
+                    WALLETS = plain.wallets || WALLETS;
+                    INVOICES = plain.invoices || INVOICES;
+                    saveAll();
+                    showToast(t('backup_restored'), 'success');
+                } catch (err) {
+                    showToast(t('backup_error'), 'error');
+                }
+            };
+            input.click();
+        },
+
+        autoBackup() {
+            const last = localStorage.getItem('chouikh_last_backup');
+            const now = Date.now();
+            if (!last || now - parseInt(last) > 24 * 60 * 60 * 1000) {
+                localStorage.setItem('chouikh_auto_backup', JSON.stringify({
+                    date: new Date().toISOString(),
+                    db: DB, wallets: WALLETS, invoices: INVOICES, categories: CATEGORIES
+                }));
+                localStorage.setItem('chouikh_last_backup', now.toString());
+            }
+        }
+    };
+
+    // === نظام اللغات ===
+    const LANGS = {
+        ar: {
+            dir: 'rtl',
+            app_name: 'شويخ',
+            app_subtitle: 'نظام إدارة الأموال المتقدم',
+            login_title: 'تسجيل الدخول',
+            login_subtitle: 'سجّل دخولك لإدارة حسابك',
+            phone: 'رقم الهاتف',
+            password: 'كلمة المرور',
+            login_btn: 'دخول',
+            demo_account: 'حساب المدير للتجربة',
+            biometric_login: 'دخول بالبصمة',
+            logout: 'خروج',
+            dashboard: 'لوحة التحكم',
+            accounts: 'الحسابات',
+            wallets: 'المحافظ',
+            transactions: 'العمليات',
+            invoices: 'الفواتير',
+            reports: 'التقارير',
+            settings: 'الإعدادات',
+            backup: 'النسخ الاحتياطي',
+            total_balance: 'إجمالي الأرصدة',
+            total_deposits: 'إجمالي الإيداعات',
+            total_withdrawals: 'إجمالي السحوبات',
+            total_clients: 'عدد العملاء',
+            recent_transactions: 'آخر العمليات',
+            add_person: 'إضافة شخص جديد',
+            full_name: 'الاسم الكامل',
+            initial_balance: 'رصيد ابتدائي',
+            add_btn: 'إضافة',
+            cancel: 'إلغاء',
+            deposit: 'إيداع',
+            withdraw: 'سحب',
+            amount: 'المبلغ',
+            note: 'ملاحظات',
+            confirm: 'تأكيد',
+            delete: 'حذف',
+            view_details: 'عرض التفاصيل',
+            no_clients: 'لا يوجد عملاء حتى الآن',
+            no_transactions: 'لا توجد عمليات',
+            operations_count: 'عدد العمليات',
+            transaction_log: 'سجل العمليات',
+            delete_confirm: 'متأكد من حذف هذا الشخص وكل عملياته؟',
+            wrong_credentials: 'البيانات غير صحيحة',
+            fill_fields: 'املأ كل الحقول المطلوبة',
+            phone_exists: 'رقم الهاتف مسجل من قبل',
+            added_success: 'تم الإضافة بنجاح',
+            invalid_amount: 'أدخل مبلغ صحيح',
+            insufficient_balance: 'الرصيد غير كافي',
+            back: 'رجوع',
+            search: 'بحث...',
+            filter_all: 'الكل',
+            filter_deposits: 'الإيداعات',
+            filter_withdrawals: 'السحوبات',
+            // المحافظ
+            wallet_name: 'اسم المحفظة',
+            wallet_type: 'نوع المحفظة',
+            wallet_cash: 'نقدي',
+            wallet_bank: 'بنكي',
+            wallet_digital: 'رقمي',
+            add_wallet: 'إضافة محفظة',
+            no_wallets: 'لا توجد محافظ',
+            transfer: 'تحويل',
+            transfer_from: 'من محفظة',
+            transfer_to: 'إلى محفظة',
+            // الفواتير
+            invoice: 'فاتورة',
+            create_invoice: 'إنشاء فاتورة',
+            invoice_number: 'رقم الفاتورة',
+            invoice_to: 'فاتورة إلى',
+            invoice_items: 'بنود الفاتورة',
+            item_name: 'اسم البند',
+            item_qty: 'الكمية',
+            item_price: 'السعر',
+            add_item: 'إضافة بند',
+            invoice_total: 'الإجمالي',
+            invoice_paid: 'مدفوعة',
+            invoice_unpaid: 'غير مدفوعة',
+            invoice_partial: 'مدفوعة جزئياً',
+            print_invoice: 'طباعة',
+            no_invoices: 'لا توجد فواتير',
+            due_date: 'تاريخ الاستحقاق',
+            // التقارير
+            report_title: 'التقارير المالية',
+            report_period: 'الفترة',
+            report_weekly: 'أسبوعي',
+            report_monthly: 'شهري',
+            report_yearly: 'سنوي',
+            report_custom: 'مخصص',
+            report_from: 'من',
+            report_to: 'إلى',
+            generate_report: 'إنشاء التقرير',
+            net_flow: 'صافي التدفق',
+            avg_transaction: 'متوسط العملية',
+            largest_deposit: 'أكبر إيداع',
+            largest_withdrawal: 'أكبر سحب',
+            daily_breakdown: 'التفصيل اليومي',
+            top_clients: 'أكبر العملاء',
+            export_pdf: 'تصدير PDF',
+            export_csv: 'تصدير CSV',
+            // الإعدادات
+            language: 'اللغة',
+            arabic: 'العربية',
+            english: 'English',
+            dark_mode: 'الوضع الداكن',
+            biometric_protection: 'حماية بالبصمة',
+            auto_backup: 'نسخ احتياطي تلقائي',
+            encryption_status: 'حالة التشفير',
+            encryption_active: 'التشفير AES-256 نشط',
+            change_password: 'تغيير كلمة المرور',
+            current_password: 'كلمة المرور الحالية',
+            new_password: 'كلمة المرور الجديدة',
+            confirm_password: 'تأكيد كلمة المرور',
+            save_settings: 'حفظ الإعدادات',
+            // النسخ الاحتياطي
+            backup_title: 'النسخ الاحتياطي',
+            backup_export: 'تصدير نسخة احتياطية مشفرة',
+            backup_import: 'استيراد نسخة احتياطية',
+            backup_auto: 'آخر نسخة تلقائية',
+            backup_exported: 'تم تصدير النسخة الاحتياطية',
+            backup_restored: 'تم استعادة النسخة الاحتياطية',
+            backup_error: 'خطأ في استعادة النسخة',
+            // البيومترية
+            biometric_not_available: 'المصادقة البيومترية غير متاحة',
+            biometric_success: 'تم التحقق بنجاح',
+            biometric_fail: 'فشل التحقق',
+            biometric_cancelled: 'تم إلغاء التحقق',
+            biometric_prompt: 'استخدم بصمة الإصبع أو الوجه للمتابعة',
+            // عام
+            currency: 'د.ج',
+            today: 'اليوم',
+            this_week: 'هذا الأسبوع',
+            this_month: 'هذا الشهر',
+            category: 'التصنيف',
+            categories: 'التصنيفات',
+            uncategorized: 'غير مصنف',
+            edit: 'تعديل',
+            save: 'حفظ',
+            close: 'إغلاق',
+            total: 'المجموع',
+            date: 'التاريخ',
+            status: 'الحالة',
+            actions: 'إجراءات',
+            admin_panel: 'لوحة المدير',
+            my_account: 'حسابي',
+            welcome: 'مرحباً',
+            overview: 'نظرة عامة',
+            financial_health: 'الصحة المالية',
+            income_vs_expense: 'الدخل مقابل المصروفات',
+            monthly_trend: 'الاتجاه الشهري',
+            quick_actions: 'إجراءات سريعة',
+            export_data: 'تصدير البيانات',
+            client_account: 'حساب العميل',
+            total_balance_label: 'الرصيد الكلي',
+            no_data: 'لا توجد بيانات',
+            description: 'الوصف',
+            mark_paid: 'تحديد كمدفوعة',
+            delete_invoice: 'حذف الفاتورة',
+            all_invoices: 'كل الفواتير',
+            paid_invoices: 'المدفوعة',
+            unpaid_invoices: 'غير المدفوعة',
+            amount_paid: 'المبلغ المدفوع',
+            amount_due: 'المبلغ المستحق',
+            wallet_balance: 'رصيد المحفظة',
+            deposit_to_wallet: 'إيداع للمحفظة',
+            withdraw_from_wallet: 'سحب من المحفظة',
+            transfer_between: 'تحويل بين المحافظ',
+            select_wallet: 'اختر محفظة',
+            wallet_transactions: 'عمليات المحفظة',
+            edit_person: 'تعديل البيانات',
+            person_info: 'معلومات الشخص',
+            security: 'الأمان',
+            data_encrypted: 'البيانات مشفرة بتقنية AES-256',
+            menu: 'القائمة',
+        },
+        en: {
+            dir: 'ltr',
+            app_name: 'Chouikh',
+            app_subtitle: 'Advanced Money Management System',
+            login_title: 'Login',
+            login_subtitle: 'Sign in to manage your account',
+            phone: 'Phone Number',
+            password: 'Password',
+            login_btn: 'Login',
+            demo_account: 'Demo Admin Account',
+            biometric_login: 'Biometric Login',
+            logout: 'Logout',
+            dashboard: 'Dashboard',
+            accounts: 'Accounts',
+            wallets: 'Wallets',
+            transactions: 'Transactions',
+            invoices: 'Invoices',
+            reports: 'Reports',
+            settings: 'Settings',
+            backup: 'Backup',
+            total_balance: 'Total Balance',
+            total_deposits: 'Total Deposits',
+            total_withdrawals: 'Total Withdrawals',
+            total_clients: 'Total Clients',
+            recent_transactions: 'Recent Transactions',
+            add_person: 'Add New Person',
+            full_name: 'Full Name',
+            initial_balance: 'Initial Balance',
+            add_btn: 'Add',
+            cancel: 'Cancel',
+            deposit: 'Deposit',
+            withdraw: 'Withdraw',
+            amount: 'Amount',
+            note: 'Notes',
+            confirm: 'Confirm',
+            delete: 'Delete',
+            view_details: 'View Details',
+            no_clients: 'No clients yet',
+            no_transactions: 'No transactions',
+            operations_count: 'Operations',
+            transaction_log: 'Transaction Log',
+            delete_confirm: 'Are you sure you want to delete this person and all transactions?',
+            wrong_credentials: 'Invalid credentials',
+            fill_fields: 'Please fill all required fields',
+            phone_exists: 'Phone number already registered',
+            added_success: 'Added successfully',
+            invalid_amount: 'Enter a valid amount',
+            insufficient_balance: 'Insufficient balance',
+            back: 'Back',
+            search: 'Search...',
+            filter_all: 'All',
+            filter_deposits: 'Deposits',
+            filter_withdrawals: 'Withdrawals',
+            wallet_name: 'Wallet Name',
+            wallet_type: 'Wallet Type',
+            wallet_cash: 'Cash',
+            wallet_bank: 'Bank',
+            wallet_digital: 'Digital',
+            add_wallet: 'Add Wallet',
+            no_wallets: 'No wallets',
+            transfer: 'Transfer',
+            transfer_from: 'From wallet',
+            transfer_to: 'To wallet',
+            invoice: 'Invoice',
+            create_invoice: 'Create Invoice',
+            invoice_number: 'Invoice Number',
+            invoice_to: 'Invoice To',
+            invoice_items: 'Invoice Items',
+            item_name: 'Item Name',
+            item_qty: 'Quantity',
+            item_price: 'Price',
+            add_item: 'Add Item',
+            invoice_total: 'Total',
+            invoice_paid: 'Paid',
+            invoice_unpaid: 'Unpaid',
+            invoice_partial: 'Partially Paid',
+            print_invoice: 'Print',
+            no_invoices: 'No invoices',
+            due_date: 'Due Date',
+            report_title: 'Financial Reports',
+            report_period: 'Period',
+            report_weekly: 'Weekly',
+            report_monthly: 'Monthly',
+            report_yearly: 'Yearly',
+            report_custom: 'Custom',
+            report_from: 'From',
+            report_to: 'To',
+            generate_report: 'Generate Report',
+            net_flow: 'Net Flow',
+            avg_transaction: 'Avg Transaction',
+            largest_deposit: 'Largest Deposit',
+            largest_withdrawal: 'Largest Withdrawal',
+            daily_breakdown: 'Daily Breakdown',
+            top_clients: 'Top Clients',
+            export_pdf: 'Export PDF',
+            export_csv: 'Export CSV',
+            language: 'Language',
+            arabic: 'العربية',
+            english: 'English',
+            dark_mode: 'Dark Mode',
+            biometric_protection: 'Biometric Protection',
+            auto_backup: 'Auto Backup',
+            encryption_status: 'Encryption Status',
+            encryption_active: 'AES-256 Encryption Active',
+            change_password: 'Change Password',
+            current_password: 'Current Password',
+            new_password: 'New Password',
+            confirm_password: 'Confirm Password',
+            save_settings: 'Save Settings',
+            backup_title: 'Backup',
+            backup_export: 'Export Encrypted Backup',
+            backup_import: 'Import Backup',
+            backup_auto: 'Last Auto Backup',
+            backup_exported: 'Backup exported',
+            backup_restored: 'Backup restored',
+            backup_error: 'Backup restore error',
+            biometric_not_available: 'Biometric authentication not available',
+            biometric_success: 'Verification successful',
+            biometric_fail: 'Verification failed',
+            biometric_cancelled: 'Verification cancelled',
+            biometric_prompt: 'Use fingerprint or face to continue',
+            currency: 'DZD',
+            today: 'Today',
+            this_week: 'This Week',
+            this_month: 'This Month',
+            category: 'Category',
+            categories: 'Categories',
+            uncategorized: 'Uncategorized',
+            edit: 'Edit',
+            save: 'Save',
+            close: 'Close',
+            total: 'Total',
+            date: 'Date',
+            status: 'Status',
+            actions: 'Actions',
+            admin_panel: 'Admin Panel',
+            my_account: 'My Account',
+            welcome: 'Welcome',
+            overview: 'Overview',
+            financial_health: 'Financial Health',
+            income_vs_expense: 'Income vs Expense',
+            monthly_trend: 'Monthly Trend',
+            quick_actions: 'Quick Actions',
+            export_data: 'Export Data',
+            client_account: 'Client Account',
+            total_balance_label: 'Total Balance',
+            no_data: 'No data',
+            description: 'Description',
+            mark_paid: 'Mark as Paid',
+            delete_invoice: 'Delete Invoice',
+            all_invoices: 'All Invoices',
+            paid_invoices: 'Paid',
+            unpaid_invoices: 'Unpaid',
+            amount_paid: 'Amount Paid',
+            amount_due: 'Amount Due',
+            wallet_balance: 'Wallet Balance',
+            deposit_to_wallet: 'Deposit to Wallet',
+            withdraw_from_wallet: 'Withdraw from Wallet',
+            transfer_between: 'Transfer Between Wallets',
+            select_wallet: 'Select Wallet',
+            wallet_transactions: 'Wallet Transactions',
+            edit_person: 'Edit Info',
+            person_info: 'Person Info',
+            security: 'Security',
+            data_encrypted: 'Data encrypted with AES-256',
+            menu: 'Menu',
+        }
+    };
+
+    // === التصنيفات الافتراضية ===
+    function defaultCategories() {
+        return [
+            { id: 1, name_ar: 'رواتب', name_en: 'Salaries', icon: 'fa-money-bill-wave', color: '#10b981' },
+            { id: 2, name_ar: 'مبيعات', name_en: 'Sales', icon: 'fa-shopping-cart', color: '#3b82f6' },
+            { id: 3, name_ar: 'مشتريات', name_en: 'Purchases', icon: 'fa-box', color: '#f59e0b' },
+            { id: 4, name_ar: 'إيجار', name_en: 'Rent', icon: 'fa-building', color: '#8b5cf6' },
+            { id: 5, name_ar: 'خدمات', name_en: 'Services', icon: 'fa-concierge-bell', color: '#ec4899' },
+            { id: 6, name_ar: 'أخرى', name_en: 'Other', icon: 'fa-ellipsis-h', color: '#6b7280' },
+        ];
+    }
+
+    // === حالة التطبيق ===
+    let DB = JSON.parse(localStorage.getItem('chouikh_db') || '[]');
+    let WALLETS = JSON.parse(localStorage.getItem('chouikh_wallets') || '[]');
+    let INVOICES = JSON.parse(localStorage.getItem('chouikh_invoices') || '[]');
+    let CATEGORIES = JSON.parse(localStorage.getItem('chouikh_categories') || 'null') || defaultCategories();
+    let SETTINGS = JSON.parse(localStorage.getItem('chouikh_settings') || '{}');
+
+    if (!SETTINGS.lang) SETTINGS.lang = 'ar';
+    if (SETTINGS.darkMode === undefined) SETTINGS.darkMode = false;
+    if (SETTINGS.biometric === undefined) SETTINGS.biometric = false;
+    if (SETTINGS.autoBackup === undefined) SETTINGS.autoBackup = true;
+
+    let user = null;
+    let currentPage = 'dashboard';
+    let sidebarOpen = false;
+    let viewingUser = null;
+    let activeCharts = [];
+
+    // إنشاء المدير تلقائياً
+    if (DB.length === 0) {
+        DB.push({
+            id: 1, name: 'المدير', phone: '0550000000',
+            pass: btoa('1234'), role: 'admin', balance: 0, log: []
+        });
+        save();
+    }
+
+    // === دوال مساعدة ===
+    function t(key) { return LANGS[SETTINGS.lang]?.[key] || LANGS['ar'][key] || key; }
+
+    function fmt(n) {
+        return new Intl.NumberFormat(SETTINGS.lang === 'ar' ? 'ar-DZ' : 'en-DZ', {
+            style: 'currency', currency: 'DZD', minimumFractionDigits: 2
+        }).format(n);
+    }
+
+    function fmtDate(d) {
+        if (!d) return '';
+        try {
+            const date = new Date(d);
+            return date.toLocaleDateString(SETTINGS.lang === 'ar' ? 'ar-DZ' : 'en-US', {
+                year: 'numeric', month: 'short', day: 'numeric'
+            });
+        } catch { return d; }
+    }
+
+    function fmtDateShort(d) {
+        if (!d) return '';
+        try {
+            const date = new Date(d);
+            return date.toLocaleDateString(SETTINGS.lang === 'ar' ? 'ar-DZ' : 'en-US', {
+                month: 'short', day: 'numeric'
+            });
+        } catch { return d; }
+    }
+
+    function save() {
+        localStorage.setItem('chouikh_db', JSON.stringify(DB));
+    }
+
+    function saveAll() {
+        localStorage.setItem('chouikh_db', JSON.stringify(DB));
+        localStorage.setItem('chouikh_wallets', JSON.stringify(WALLETS));
+        localStorage.setItem('chouikh_invoices', JSON.stringify(INVOICES));
+        localStorage.setItem('chouikh_categories', JSON.stringify(CATEGORIES));
+        localStorage.setItem('chouikh_settings', JSON.stringify(SETTINGS));
+        if (SETTINGS.autoBackup) CloudBackup.autoBackup();
+        render();
+    }
+
+    function showToast(msg, type = 'info') {
+        const colors = {
+            success: 'bg-green-600', error: 'bg-red-600',
+            info: 'bg-blue-600', warning: 'bg-yellow-500'
+        };
+        const icons = {
+            success: 'fa-check-circle', error: 'fa-times-circle',
+            info: 'fa-info-circle', warning: 'fa-exclamation-triangle'
+        };
+        const toast = document.createElement('div');
+        toast.className = `fixed top-5 left-1/2 -translate-x-1/2 ${colors[type]} text-white px-6 py-3 rounded-xl shadow-2xl z-[100] flex items-center gap-3 slide-up`;
+        toast.innerHTML = `<i class="fas ${icons[type]}"></i><span class="font-semibold">${msg}</span>`;
+        document.body.appendChild(toast);
+        setTimeout(() => { toast.style.opacity = '0'; toast.style.transition = 'opacity 0.5s'; setTimeout(() => toast.remove(), 500); }, 3000);
+    }
+
+    function closeModal() {
+        document.getElementById('modal-root').innerHTML = '';
+    }
+
+    function showModal(html) {
+        document.getElementById('modal-root').innerHTML = `
+        <div class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-[60] modal-overlay" onclick="if(event.target===this)closeModal()">
+            <div class="modal-content">${html}</div>
+        </div>`;
+    }
+
+    function destroyCharts() {
+        activeCharts.forEach(c => { try { c.destroy(); } catch {} });
+        activeCharts = [];
+    }
+
+    function getAllTransactions() {
+        const all = [];
+        DB.filter(u => u.role === 'user').forEach(u => {
+            u.log.forEach(l => {
+                all.push({ ...l, userName: u.name, userId: u.id });
+            });
+        });
+        return all.sort((a, b) => (b.id || 0) - (a.id || 0));
+    }
+
+    // === تسجيل الدخول/الخروج ===
+    function login() {
+        const p = document.getElementById('login-phone').value.trim();
+        const w = btoa(document.getElementById('login-pass').value);
+        const u = DB.find(x => x.phone === p && x.pass === w);
+        if (!u) return showToast(t('wrong_credentials'), 'error');
+        user = u;
+        currentPage = 'dashboard';
+        viewingUser = null;
+        render();
+    }
+
+    async function biometricLogin() {
+        const result = await BiometricAuth.authenticate();
+        if (result.success) {
+            // استخدم آخر مستخدم مخزن
+            const lastId = localStorage.getItem('chouikh_last_user');
+            if (lastId) {
+                const u = DB.find(x => x.id == lastId);
+                if (u) { user = u; currentPage = 'dashboard'; render(); return; }
+            }
+            showToast(t('biometric_success') + ' - ' + t('login_subtitle'), 'info');
+        } else {
+            showToast(result.msg, 'error');
+        }
+    }
+
+    function logout() {
+        if (user) localStorage.setItem('chouikh_last_user', user.id);
+        user = null;
+        viewingUser = null;
+        currentPage = 'dashboard';
+        destroyCharts();
+        render();
+    }
+
+    // === تنقل ===
+    function navigate(page) {
+        destroyCharts();
+        currentPage = page;
+        viewingUser = null;
+        sidebarOpen = false;
+        render();
+    }
+
+    function openUserDetail(id) {
+        viewingUser = DB.find(x => x.id === id);
+        currentPage = 'user-detail';
+        render();
+    }
+
+    function backToAccounts() {
+        viewingUser = null;
+        currentPage = 'accounts';
+        render();
+    }
+
+    function toggleSidebar() {
+        sidebarOpen = !sidebarOpen;
+        render();
+    }
+
+    // === عمليات CRUD ===
+    function showAddPerson() {
+        showModal(`
+        <div class="bg-white rounded-3xl p-8 w-full max-w-md shadow-2xl">
+            <div class="flex items-center gap-3 mb-6">
+                <div class="w-12 h-12 gradient-primary rounded-xl flex items-center justify-center">
+                    <i class="fas fa-user-plus text-white text-xl"></i>
+                </div>
+                <h3 class="text-2xl font-bold text-gray-800">${t('add_person')}</h3>
+            </div>
+            <input id="m-name" placeholder="${t('full_name')}" class="w-full border-2 border-gray-200 p-4 rounded-xl mb-3 focus:border-blue-500 outline-none text-lg">
+            <input id="m-phone" placeholder="${t('phone')}" class="w-full border-2 border-gray-200 p-4 rounded-xl mb-3 focus:border-blue-500 outline-none text-lg" dir="ltr">
+            <input id="m-pass" type="password" placeholder="${t('password')}" class="w-full border-2 border-gray-200 p-4 rounded-xl mb-3 focus:border-blue-500 outline-none text-lg">
+            <input id="m-bal" type="number" placeholder="${t('initial_balance')}" class="w-full border-2 border-gray-200 p-4 rounded-xl mb-5 focus:border-blue-500 outline-none text-lg" dir="ltr">
+            <div class="flex gap-3">
+                <button onclick="doAddPerson()" class="flex-1 gradient-primary text-white py-4 rounded-xl font-bold text-lg shadow-lg hover:opacity-90 transition">${t('add_btn')}</button>
+                <button onclick="closeModal()" class="flex-1 bg-gray-100 hover:bg-gray-200 py-4 rounded-xl font-bold text-lg transition">${t('cancel')}</button>
+            </div>
+        </div>`);
+    }
+
+    function doAddPerson() {
+        const name = document.getElementById('m-name').value.trim();
+        const phone = document.getElementById('m-phone').value.trim();
+        const pass = document.getElementById('m-pass').value;
+        const balance = parseFloat(document.getElementById('m-bal').value) || 0;
+        if (!name || !phone || !pass) return showToast(t('fill_fields'), 'error');
+        if (DB.find(x => x.phone === phone)) return showToast(t('phone_exists'), 'error');
+        DB.push({
+            id: Date.now(), name, phone, pass: btoa(pass),
+            role: 'user', balance, log: [],
+            createdAt: new Date().toISOString()
+        });
+        closeModal();
+        saveAll();
+        showToast(t('added_success'), 'success');
+    }
+
+    function showTransaction(type) {
+        const u = viewingUser;
+        const isDeposit = type === 'dep';
+        showModal(`
+        <div class="bg-white rounded-3xl p-8 w-full max-w-md shadow-2xl">
+            <div class="flex items-center gap-3 mb-6">
+                <div class="w-12 h-12 ${isDeposit ? 'gradient-success' : 'gradient-danger'} rounded-xl flex items-center justify-center">
+                    <i class="fas ${isDeposit ? 'fa-arrow-down' : 'fa-arrow-up'} text-white text-xl"></i>
+                </div>
+                <h3 class="text-2xl font-bold text-gray-800">${isDeposit ? t('deposit') : t('withdraw')}</h3>
+            </div>
+            <p class="text-gray-500 mb-4">${u.name} — ${t('total_balance_label')}: ${fmt(u.balance)}</p>
+            <input id="m-amt" type="number" placeholder="${t('amount')}" class="w-full border-2 border-gray-200 p-4 rounded-xl mb-3 focus:border-blue-500 outline-none text-lg" dir="ltr">
+            <select id="m-cat" class="w-full border-2 border-gray-200 p-4 rounded-xl mb-3 focus:border-blue-500 outline-none text-lg">
+                <option value="">${t('category')}</option>
+                ${CATEGORIES.map(c => `<option value="${c.id}">${SETTINGS.lang === 'ar' ? c.name_ar : c.name_en}</option>`).join('')}
+            </select>
+            <input id="m-note" placeholder="${t('note')}" class="w-full border-2 border-gray-200 p-4 rounded-xl mb-5 focus:border-blue-500 outline-none text-lg">
+            <div class="flex gap-3">
+                <button onclick="doTransaction('${type}')" class="flex-1 ${isDeposit ? 'gradient-success' : 'gradient-danger'} text-white py-4 rounded-xl font-bold text-lg shadow-lg hover:opacity-90 transition">${t('confirm')}</button>
+                <button onclick="closeModal()" class="flex-1 bg-gray-100 hover:bg-gray-200 py-4 rounded-xl font-bold text-lg transition">${t('cancel')}</button>
+            </div>
+        </div>`);
+    }
+
+    function doTransaction(type) {
+        const amount = parseFloat(document.getElementById('m-amt').value);
+        const note = document.getElementById('m-note').value;
+        const catId = document.getElementById('m-cat').value;
+        if (!amount || amount <= 0) return showToast(t('invalid_amount'), 'error');
+        const u = DB.find(x => x.id === viewingUser.id);
+        if (type === 'with' && amount > u.balance) return showToast(t('insufficient_balance'), 'error');
+        u.log.unshift({
+            id: Date.now(),
+            type: type === 'dep' ? 'deposit' : 'withdraw',
+            amount,
+            date: new Date().toISOString(),
+            note,
+            category: catId ? parseInt(catId) : null
+        });
+        u.balance += type === 'dep' ? amount : -amount;
+        viewingUser = u;
+        closeModal();
+        saveAll();
+        showToast(t('confirm'), 'success');
+    }
+
+    function deleteUser(id) {
+        if (!confirm(t('delete_confirm'))) return;
+        DB = DB.filter(x => x.id !== id);
+        if (viewingUser && viewingUser.id === id) viewingUser = null;
+        currentPage = 'accounts';
+        saveAll();
+    }
+
+    // === المحافظ ===
+    function showAddWallet() {
+        showModal(`
+        <div class="bg-white rounded-3xl p-8 w-full max-w-md shadow-2xl">
+            <div class="flex items-center gap-3 mb-6">
+                <div class="w-12 h-12 bg-purple-600 rounded-xl flex items-center justify-center">
+                    <i class="fas fa-wallet text-white text-xl"></i>
+                </div>
+                <h3 class="text-2xl font-bold text-gray-800">${t('add_wallet')}</h3>
+            </div>
+            <input id="m-wname" placeholder="${t('wallet_name')}" class="w-full border-2 border-gray-200 p-4 rounded-xl mb-3 focus:border-blue-500 outline-none text-lg">
+            <select id="m-wtype" class="w-full border-2 border-gray-200 p-4 rounded-xl mb-3 focus:border-blue-500 outline-none text-lg">
+                <option value="cash">${t('wallet_cash')}</option>
+                <option value="bank">${t('wallet_bank')}</option>
+                <option value="digital">${t('wallet_digital')}</option>
+            </select>
+            <input id="m-wbal" type="number" placeholder="${t('initial_balance')}" class="w-full border-2 border-gray-200 p-4 rounded-xl mb-5 focus:border-blue-500 outline-none text-lg" dir="ltr">
+            <div class="flex gap-3">
+                <button onclick="doAddWallet()" class="flex-1 bg-purple-600 text-white py-4 rounded-xl font-bold text-lg shadow-lg hover:bg-purple-700 transition">${t('add_btn')}</button>
+                <button onclick="closeModal()" class="flex-1 bg-gray-100 hover:bg-gray-200 py-4 rounded-xl font-bold text-lg transition">${t('cancel')}</button>
+            </div>
+        </div>`);
+    }
+
+    function doAddWallet() {
+        const name = document.getElementById('m-wname').value.trim();
+        const type = document.getElementById('m-wtype').value;
+        const balance = parseFloat(document.getElementById('m-wbal').value) || 0;
+        if (!name) return showToast(t('fill_fields'), 'error');
+        WALLETS.push({ id: Date.now(), name, type, balance, log: [], createdAt: new Date().toISOString() });
+        closeModal();
+        saveAll();
+        showToast(t('added_success'), 'success');
+    }
+
+    function showWalletTransfer() {
+        if (WALLETS.length < 2) return showToast(t('no_wallets'), 'warning');
+        const opts = WALLETS.map(w => `<option value="${w.id}">${w.name} (${fmt(w.balance)})</option>`).join('');
+        showModal(`
+        <div class="bg-white rounded-3xl p-8 w-full max-w-md shadow-2xl">
+            <div class="flex items-center gap-3 mb-6">
+                <div class="w-12 h-12 bg-indigo-600 rounded-xl flex items-center justify-center">
+                    <i class="fas fa-exchange-alt text-white text-xl"></i>
+                </div>
+                <h3 class="text-2xl font-bold text-gray-800">${t('transfer_between')}</h3>
+            </div>
+            <select id="m-wfrom" class="w-full border-2 border-gray-200 p-4 rounded-xl mb-3 outline-none text-lg">${opts}</select>
+            <div class="flex justify-center my-2"><i class="fas fa-arrow-down text-2xl text-gray-400"></i></div>
+            <select id="m-wto" class="w-full border-2 border-gray-200 p-4 rounded-xl mb-3 outline-none text-lg">${opts}</select>
+            <input id="m-wamt" type="number" placeholder="${t('amount')}" class="w-full border-2 border-gray-200 p-4 rounded-xl mb-5 outline-none text-lg" dir="ltr">
+            <div class="flex gap-3">
+                <button onclick="doWalletTransfer()" class="flex-1 bg-indigo-600 text-white py-4 rounded-xl font-bold text-lg shadow-lg hover:bg-indigo-700 transition">${t('confirm')}</button>
+                <button onclick="closeModal()" class="flex-1 bg-gray-100 hover:bg-gray-200 py-4 rounded-xl font-bold text-lg transition">${t('cancel')}</button>
+            </div>
+        </div>`);
+    }
+
+    function doWalletTransfer() {
+        const fromId = parseInt(document.getElementById('m-wfrom').value);
+        const toId = parseInt(document.getElementById('m-wto').value);
+        const amount = parseFloat(document.getElementById('m-wamt').value);
+        if (fromId === toId) return showToast(t('invalid_amount'), 'error');
+        if (!amount || amount <= 0) return showToast(t('invalid_amount'), 'error');
+        const from = WALLETS.find(w => w.id === fromId);
+        const to = WALLETS.find(w => w.id === toId);
+        if (amount > from.balance) return showToast(t('insufficient_balance'), 'error');
+        from.balance -= amount;
+        to.balance += amount;
+        const now = new Date().toISOString();
+        from.log.unshift({ id: Date.now(), type: 'transfer_out', amount, date: now, to: to.name });
+        to.log.unshift({ id: Date.now() + 1, type: 'transfer_in', amount, date: now, from: from.name });
+        closeModal();
+        saveAll();
+        showToast(t('confirm'), 'success');
+    }
+
+    function showWalletDeposit(walletId) {
+        showModal(`
+        <div class="bg-white rounded-3xl p-8 w-full max-w-md shadow-2xl">
+            <h3 class="text-xl font-bold mb-4">${t('deposit_to_wallet')}</h3>
+            <input id="m-wdamt" type="number" placeholder="${t('amount')}" class="w-full border-2 p-4 rounded-xl mb-3 outline-none text-lg" dir="ltr">
+            <input id="m-wdnote" placeholder="${t('note')}" class="w-full border-2 p-4 rounded-xl mb-5 outline-none text-lg">
+            <div class="flex gap-3">
+                <button onclick="doWalletOp(${walletId},'dep')" class="flex-1 gradient-success text-white py-4 rounded-xl font-bold">${t('confirm')}</button>
+                <button onclick="closeModal()" class="flex-1 bg-gray-100 py-4 rounded-xl font-bold">${t('cancel')}</button>
+            </div>
+        </div>`);
+    }
+
+    function showWalletWithdraw(walletId) {
+        showModal(`
+        <div class="bg-white rounded-3xl p-8 w-full max-w-md shadow-2xl">
+            <h3 class="text-xl font-bold mb-4">${t('withdraw_from_wallet')}</h3>
+            <input id="m-wdamt" type="number" placeholder="${t('amount')}" class="w-full border-2 p-4 rounded-xl mb-3 outline-none text-lg" dir="ltr">
+            <input id="m-wdnote" placeholder="${t('note')}" class="w-full border-2 p-4 rounded-xl mb-5 outline-none text-lg">
+            <div class="flex gap-3">
+                <button onclick="doWalletOp(${walletId},'with')" class="flex-1 gradient-danger text-white py-4 rounded-xl font-bold">${t('confirm')}</button>
+                <button onclick="closeModal()" class="flex-1 bg-gray-100 py-4 rounded-xl font-bold">${t('cancel')}</button>
+            </div>
+        </div>`);
+    }
+
+    function doWalletOp(walletId, type) {
+        const amount = parseFloat(document.getElementById('m-wdamt').value);
+        const note = document.getElementById('m-wdnote')?.value || '';
+        if (!amount || amount <= 0) return showToast(t('invalid_amount'), 'error');
+        const w = WALLETS.find(x => x.id === walletId);
+        if (type === 'with' && amount > w.balance) return showToast(t('insufficient_balance'), 'error');
+        w.balance += type === 'dep' ? amount : -amount;
+        w.log.unshift({ id: Date.now(), type: type === 'dep' ? 'deposit' : 'withdraw', amount, date: new Date().toISOString(), note });
+        closeModal();
+        saveAll();
+    }
+
+    function deleteWallet(id) {
+        if (!confirm(t('delete_confirm'))) return;
+        WALLETS = WALLETS.filter(w => w.id !== id);
+        saveAll();
+    }
+
+    // === الفواتير ===
+    let tempInvoiceItems = [];
+
+    function showCreateInvoice() {
+        tempInvoiceItems = [{ name: '', qty: 1, price: 0 }];
+        renderInvoiceModal();
+    }
+
+    function renderInvoiceModal() {
+        const clients = DB.filter(x => x.role === 'user');
+        const clientOpts = clients.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+        const itemsHtml = tempInvoiceItems.map((item, i) => `
+            <div class="flex gap-2 mb-2 items-center">
+                <input value="${item.name}" onchange="tempInvoiceItems[${i}].name=this.value" placeholder="${t('item_name')}" class="flex-1 border-2 p-3 rounded-xl outline-none">
+                <input value="${item.qty}" type="number" min="1" onchange="tempInvoiceItems[${i}].qty=parseInt(this.value)||1;updateInvTotal()" placeholder="${t('item_qty')}" class="w-20 border-2 p-3 rounded-xl outline-none text-center" dir="ltr">
+                <input value="${item.price}" type="number" min="0" onchange="tempInvoiceItems[${i}].price=parseFloat(this.value)||0;updateInvTotal()" placeholder="${t('item_price')}" class="w-28 border-2 p-3 rounded-xl outline-none" dir="ltr">
+                <button onclick="tempInvoiceItems.splice(${i},1);renderInvoiceModal()" class="text-red-500 hover:text-red-700 px-2"><i class="fas fa-trash"></i></button>
+            </div>
+        `).join('');
+        const total = tempInvoiceItems.reduce((s, it) => s + (it.qty * it.price), 0);
+
+        showModal(`
+        <div class="bg-white rounded-3xl p-8 w-full max-w-lg shadow-2xl max-h-[90vh] overflow-y-auto scrollbar-thin">
+            <div class="flex items-center gap-3 mb-6">
+                <div class="w-12 h-12 gradient-gold rounded-xl flex items-center justify-center">
+                    <i class="fas fa-file-invoice-dollar text-white text-xl"></i>
+                </div>
+                <h3 class="text-2xl font-bold text-gray-800">${t('create_invoice')}</h3>
+            </div>
+            <select id="m-inv-client" class="w-full border-2 p-4 rounded-xl mb-3 outline-none text-lg">
+                <option value="">${t('invoice_to')}</option>
+                ${clientOpts}
+            </select>
+            <input id="m-inv-desc" placeholder="${t('description')}" class="w-full border-2 p-4 rounded-xl mb-3 outline-none text-lg">
+            <input id="m-inv-due" type="date" class="w-full border-2 p-4 rounded-xl mb-4 outline-none text-lg" dir="ltr">
+            <h4 class="font-bold text-lg mb-3">${t('invoice_items')}</h4>
+            <div id="inv-items-list">${itemsHtml}</div>
+            <button onclick="tempInvoiceItems.push({name:'',qty:1,price:0});renderInvoiceModal()" class="text-blue-600 font-bold mb-4 hover:underline"><i class="fas fa-plus me-1"></i>${t('add_item')}</button>
+            <div class="bg-gray-50 rounded-xl p-4 mb-5 flex justify-between items-center">
+                <span class="font-bold text-lg">${t('invoice_total')}</span>
+                <span class="text-2xl font-bold text-blue-600" id="inv-total">${fmt(total)}</span>
+            </div>
+            <div class="flex gap-3">
+                <button onclick="doCreateInvoice()" class="flex-1 gradient-gold text-white py-4 rounded-xl font-bold text-lg shadow-lg hover:opacity-90 transition">${t('confirm')}</button>
+                <button onclick="closeModal()" class="flex-1 bg-gray-100 hover:bg-gray-200 py-4 rounded-xl font-bold text-lg transition">${t('cancel')}</button>
+            </div>
+        </div>`);
+    }
+
+    function updateInvTotal() {
+        const total = tempInvoiceItems.reduce((s, it) => s + (it.qty * it.price), 0);
+        const el = document.getElementById('inv-total');
+        if (el) el.textContent = fmt(total);
+    }
+
+    function doCreateInvoice() {
+        const clientId = document.getElementById('m-inv-client').value;
+        const desc = document.getElementById('m-inv-desc').value;
+        const due = document.getElementById('m-inv-due').value;
+        const items = tempInvoiceItems.filter(it => it.name && it.price > 0);
+        if (!clientId || items.length === 0) return showToast(t('fill_fields'), 'error');
+
+        const total = items.reduce((s, it) => s + (it.qty * it.price), 0);
+        const client = DB.find(x => x.id == clientId);
+
+        INVOICES.push({
+            id: Date.now(),
+            number: 'INV-' + String(INVOICES.length + 1).padStart(4, '0'),
+            clientId: parseInt(clientId),
+            clientName: client ? client.name : '',
+            description: desc,
+            items,
+            total,
+            paid: 0,
+            status: 'unpaid',
+            dueDate: due,
+            createdAt: new Date().toISOString()
+        });
+        closeModal();
+        saveAll();
+        showToast(t('added_success'), 'success');
+    }
+
+    function markInvoicePaid(id) {
+        const inv = INVOICES.find(x => x.id === id);
+        if (inv) { inv.status = 'paid'; inv.paid = inv.total; }
+        saveAll();
+    }
+
+    function deleteInvoice(id) {
+        if (!confirm(t('delete_confirm'))) return;
+        INVOICES = INVOICES.filter(x => x.id !== id);
+        saveAll();
+    }
+
+    function printInvoice(id) {
+        const inv = INVOICES.find(x => x.id === id);
+        if (!inv) return;
+        const itemRows = inv.items.map(it => `
+            <tr>
+                <td style="padding:10px;border-bottom:1px solid #eee">${it.name}</td>
+                <td style="padding:10px;border-bottom:1px solid #eee;text-align:center">${it.qty}</td>
+                <td style="padding:10px;border-bottom:1px solid #eee;text-align:center">${fmt(it.price)}</td>
+                <td style="padding:10px;border-bottom:1px solid #eee;text-align:center">${fmt(it.qty * it.price)}</td>
+            </tr>`).join('');
+
+        const win = window.open('', '_blank');
+        win.document.write(`
+        <html dir="${SETTINGS.lang === 'ar' ? 'rtl' : 'ltr'}">
+        <head><title>${inv.number}</title>
+        <style>
+            @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap');
+            body { font-family: Cairo, sans-serif; padding: 40px; color: #333; }
+            .header { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:40px; border-bottom:3px solid #1e3a5f; padding-bottom:20px; }
+            .logo { font-size:28px; font-weight:900; color:#1e3a5f; }
+            table { width:100%; border-collapse:collapse; margin:20px 0; }
+            th { background:#1e3a5f; color:white; padding:12px; }
+            .total-row { font-size:22px; font-weight:bold; }
+        </style></head>
+        <body>
+            <div class="header">
+                <div>
+                    <div class="logo">${t('app_name')}</div>
+                    <p>${t('app_subtitle')}</p>
+                </div>
+                <div style="text-align:${SETTINGS.lang === 'ar' ? 'left' : 'right'}">
+                    <h2>${inv.number}</h2>
+                    <p>${t('date')}: ${fmtDate(inv.createdAt)}</p>
+                    <p>${t('due_date')}: ${fmtDate(inv.dueDate)}</p>
+                </div>
+            </div>
+            <h3>${t('invoice_to')}: ${inv.clientName}</h3>
+            ${inv.description ? `<p>${inv.description}</p>` : ''}
+            <table>
+                <thead><tr>
+                    <th>${t('item_name')}</th>
+                    <th>${t('item_qty')}</th>
+                    <th>${t('item_price')}</th>
+                    <th>${t('total')}</th>
+                </tr></thead>
+                <tbody>${itemRows}</tbody>
+                <tfoot><tr class="total-row">
+                    <td colspan="3" style="padding:15px;font-weight:bold">${t('invoice_total')}</td>
+                    <td style="padding:15px;text-align:center;color:#1e3a5f">${fmt(inv.total)}</td>
+                </tr></tfoot>
+            </table>
+            <div style="margin-top:30px;padding:15px;background:${inv.status === 'paid' ? '#d1fae5' : '#fee2e2'};border-radius:10px;text-align:center;font-weight:bold;font-size:18px">
+                ${inv.status === 'paid' ? t('invoice_paid') : t('invoice_unpaid')}
+            </div>
+            <div style="margin-top:40px;text-align:center;color:#999;font-size:12px">
+                <p>${t('data_encrypted')}</p>
+            </div>
+        </body></html>`);
+        win.document.close();
+        win.print();
+    }
+
+    // === تقارير ===
+    function exportCSV() {
+        const all = getAllTransactions();
+        const headers = ['Name', 'Type', 'Amount', 'Date', 'Note'];
+        const rows = all.map(t => [t.userName, t.type, t.amount, t.date, t.note || '']);
+        let csv = '\ufeff' + headers.join(',') + '\n' + rows.map(r => r.map(c => `"${c}"`).join(',')).join('\n');
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `chouikh_report_${new Date().toISOString().slice(0,10)}.csv`;
+        a.click();
+        URL.revokeObjectURL(url);
+        showToast(t('export_csv'), 'success');
+    }
+
+    // === العرض الرئيسي ===
+    function render() {
+        const app = document.getElementById('app');
+        const lang = SETTINGS.lang;
+        document.documentElement.lang = lang;
+        document.documentElement.dir = LANGS[lang].dir;
+        document.body.className = lang === 'en' ? 'en bg-gray-100' : 'bg-gray-100';
+
+        if (!user) {
+            renderLogin(app);
+            return;
+        }
+
+        if (user.role === 'admin') {
+            renderAdminLayout(app);
+        } else {
+            renderClientView(app);
+        }
+    }
+
+    // === شاشة تسجيل الدخول ===
+    function renderLogin(app) {
+        app.innerHTML = `
+        <div class="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 relative overflow-hidden">
+            <!-- خلفية مزخرفة -->
+            <div class="absolute inset-0 opacity-10">
+                <div class="absolute top-20 right-20 w-72 h-72 bg-yellow-400 rounded-full blur-3xl"></div>
+                <div class="absolute bottom-20 left-20 w-96 h-96 bg-blue-400 rounded-full blur-3xl"></div>
+                <div class="absolute top-1/2 left-1/2 w-64 h-64 bg-purple-400 rounded-full blur-3xl"></div>
+            </div>
+            
+            <div class="bg-white/95 backdrop-blur-xl rounded-3xl shadow-2xl p-10 w-full max-w-md relative z-10 slide-up">
+                <div class="text-center mb-10">
+                    <div class="w-24 h-24 gradient-gold rounded-3xl flex items-center justify-center mx-auto mb-5 shadow-xl biometric-icon">
+                        <i class="fas fa-coins text-white text-4xl"></i>
+                    </div>
+                    <h1 class="text-4xl font-black text-gray-800 mb-2">${t('app_name')}</h1>
+                    <p class="text-gray-500 text-lg">${t('app_subtitle')}</p>
+                    <div class="encrypted-badge mx-auto mt-3">
+                        <i class="fas fa-shield-alt"></i> AES-256
+                    </div>
+                </div>
+                
+                <div class="space-y-4 mb-6">
+                    <div class="relative">
+                        <i class="fas fa-phone absolute top-1/2 -translate-y-1/2 ${SETTINGS.lang === 'ar' ? 'right-4' : 'left-4'} text-gray-400"></i>
+                        <input id="login-phone" placeholder="${t('phone')}" 
+                            class="w-full border-2 border-gray-200 ${SETTINGS.lang === 'ar' ? 'pr-12 pl-4' : 'pl-12 pr-4'} py-4 rounded-2xl focus:border-amber-500 outline-none text-lg transition" dir="ltr">
+                    </div>
+                    <div class="relative">
+                        <i class="fas fa-lock absolute top-1/2 -translate-y-1/2 ${SETTINGS.lang === 'ar' ? 'right-4' : 'left-4'} text-gray-400"></i>
+                        <input id="login-pass" type="password" placeholder="${t('password')}" 
+                            class="w-full border-2 border-gray-200 ${SETTINGS.lang === 'ar' ? 'pr-12 pl-4' : 'pl-12 pr-4'} py-4 rounded-2xl focus:border-amber-500 outline-none text-lg transition"
+                            onkeydown="if(event.key==='Enter')login()">
+                    </div>
+                </div>
+                
+                <button onclick="login()" class="w-full gradient-gold hover:opacity-90 text-white py-4 rounded-2xl font-bold text-xl shadow-xl transition mb-3">
+                    <i class="fas fa-sign-in-alt me-2"></i>${t('login_btn')}
+                </button>
+                
+                <button onclick="biometricLogin()" class="w-full bg-slate-800 hover:bg-slate-900 text-white py-4 rounded-2xl font-bold text-lg shadow-lg transition mb-6">
+                    <i class="fas fa-fingerprint me-2"></i>${t('biometric_login')}
+                </button>
+                
+                <div class="flex justify-center gap-3 mb-4">
+                    <button onclick="SETTINGS.lang='ar';saveAll()" class="px-4 py-2 rounded-xl ${SETTINGS.lang === 'ar' ? 'bg-amber-500 text-white' : 'bg-gray-100 text-gray-600'} font-bold transition">العربية</button>
+                    <button onclick="SETTINGS.lang='en';saveAll()" class="px-4 py-2 rounded-xl ${SETTINGS.lang === 'en' ? 'bg-amber-500 text-white' : 'bg-gray-100 text-gray-600'} font-bold transition">English</button>
+                </div>
+                
+                <div class="bg-amber-50 border-2 border-amber-100 rounded-2xl p-4 text-center">
+                    <p class="text-xs text-amber-600 font-semibold mb-1">${t('demo_account')}</p>
+                    <p class="text-sm text-amber-900 font-bold font-mono">0550000000 / 1234</p>
+                </div>
+            </div>
+        </div>`;
+    }
+
+    // === تخطيط لوحة المدير ===
+    function renderAdminLayout(app) {
+        const isRTL = SETTINGS.lang === 'ar';
+        const navItems = [
+            { id: 'dashboard', icon: 'fa-th-large', label: t('dashboard') },
+            { id: 'accounts', icon: 'fa-users', label: t('accounts') },
+            { id: 'wallets', icon: 'fa-wallet', label: t('wallets') },
+            { id: 'transactions', icon: 'fa-exchange-alt', label: t('transactions') },
+            { id: 'invoices', icon: 'fa-file-invoice-dollar', label: t('invoices') },
+            { id: 'reports', icon: 'fa-chart-bar', label: t('reports') },
+            { id: 'backup', icon: 'fa-cloud-upload-alt', label: t('backup') },
+            { id: 'settings', icon: 'fa-cog', label: t('settings') },
+        ];
+
+        app.innerHTML = `
+        <!-- الشريط الجانبي -->
+        <aside class="sidebar fixed top-0 ${isRTL ? 'right-0' : 'left-0'} bg-slate-900 text-white z-40 shadow-2xl ${sidebarOpen ? 'mobile-open' : ''}">
+            <div class="p-6 border-b border-slate-700">
+                <div class="flex items-center gap-3">
+                    <div class="w-12 h-12 gradient-gold rounded-xl flex items-center justify-center shadow-lg">
+                        <i class="fas fa-coins text-white text-xl"></i>
+                    </div>
+                    <div class="sidebar-text">
+                        <h1 class="text-xl font-black shimmer-text">${t('app_name')}</h1>
+                        <p class="text-xs text-slate-400">${t('app_subtitle')}</p>
+                    </div>
+                </div>
+            </div>
+            
+            <nav class="py-4 flex-1">
+                ${navItems.map(item => `
+                    <button onclick="navigate('${item.id}')" class="nav-item w-full flex items-center gap-3 px-5 py-3.5 text-slate-300 hover:text-amber-400 transition ${currentPage === item.id ? 'active text-amber-400' : ''}">
+                        <i class="fas ${item.icon} text-lg w-6 text-center"></i>
+                        <span class="sidebar-text font-semibold">${item.label}</span>
+                    </button>
+                `).join('')}
+            </nav>
+            
+            <div class="p-4 border-t border-slate-700">
+                <div class="flex items-center gap-3 mb-4 sidebar-text">
+                    <div class="w-10 h-10 bg-slate-700 rounded-xl flex items-center justify-center">
+                        <i class="fas fa-user-shield text-amber-400"></i>
+                    </div>
+                    <div>
+                        <p class="font-bold text-sm">${user.name}</p>
+                        <p class="text-xs text-slate-400">${t('admin_panel')}</p>
+                    </div>
+                </div>
+                <button onclick="logout()" class="w-full bg-red-600/20 hover:bg-red-600/40 text-red-400 py-3 rounded-xl font-bold transition flex items-center justify-center gap-2">
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span class="sidebar-text">${t('logout')}</span>
+                </button>
+            </div>
+        </aside>
+        
+        <!-- المحتوى الرئيسي -->
+        <main class="main-content ${isRTL ? '' : 'ml-[280px] mr-0'} bg-gray-50 min-h-screen">
+            <!-- الشريط العلوي -->
+            <header class="bg-white shadow-sm sticky top-0 z-30 px-6 py-4">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-4">
+                        <button onclick="toggleSidebar()" class="lg:hidden p-2 hover:bg-gray-100 rounded-xl">
+                            <i class="fas fa-bars text-xl"></i>
+                        </button>
+                        <div>
+                            <h2 class="text-2xl font-bold text-gray-800">${navItems.find(n => n.id === currentPage)?.label || t('dashboard')}</h2>
+                            <p class="text-sm text-gray-500">${t('welcome')}، ${user.name}</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <div class="encrypted-badge">
+                            <i class="fas fa-lock"></i> AES-256
+                        </div>
+                        <button onclick="SETTINGS.lang=SETTINGS.lang==='ar'?'en':'ar';saveAll()" class="p-2.5 hover:bg-gray-100 rounded-xl transition" title="${t('language')}">
+                            <i class="fas fa-globe text-lg text-gray-600"></i>
+                        </button>
+                    </div>
+                </div>
+            </header>
+            
+            <div class="p-6" id="page-content"></div>
+        </main>
+        
+        <!-- تراكب موبايل -->
+        ${sidebarOpen ? '<div class="fixed inset-0 bg-black/50 z-30 lg:hidden" onclick="toggleSidebar()"></div>' : ''}`;
+
+        // عرض محتوى الصفحة
+        const content = document.getElementById('page-content');
+        switch (currentPage) {
+            case 'dashboard': renderDashboard(content); break;
+            case 'accounts': renderAccounts(content); break;
+            case 'user-detail': renderUserDetail(content); break;
+            case 'wallets': renderWallets(content); break;
+            case 'transactions': renderTransactions(content); break;
+            case 'invoices': renderInvoices(content); break;
+            case 'reports': renderReports(content); break;
+            case 'backup': renderBackup(content); break;
+            case 'settings': renderSettings(content); break;
+            default: renderDashboard(content);
+        }
+    }
+
+    // === لوحة التحكم ===
+    function renderDashboard(el) {
+        const users = DB.filter(x => x.role === 'user');
+        const total = users.reduce((s, x) => s + x.balance, 0);
+        const allTrans = getAllTransactions();
+        const deposits = allTrans.filter(t => t.type === 'deposit').reduce((s, t) => s + t.amount, 0);
+        const withdrawals = allTrans.filter(t => t.type === 'withdraw').reduce((s, t) => s + t.amount, 0);
+        const recentTrans = allTrans.slice(0, 8);
+        const unpaidInvoices = INVOICES.filter(inv => inv.status !== 'paid');
+        const walletTotal = WALLETS.reduce((s, w) => s + w.balance, 0);
+
+        // حساب التغيير الشهري
+        const now = new Date();
+        const thisMonth = allTrans.filter(t => {
+            const d = new Date(t.date);
+            return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+        });
+        const thisMonthDep = thisMonth.filter(t => t.type === 'deposit').reduce((s, t) => s + t.amount, 0);
+        const thisMonthWith = thisMonth.filter(t => t.type === 'withdraw').reduce((s, t) => s + t.amount, 0);
+
+        el.innerHTML = `
+        <div class="fade-in">
+            <!-- بطاقات الإحصائيات -->
+            <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-5 mb-8">
+                <div class="stat-card gradient-primary rounded-3xl p-6 text-white shadow-xl card-hover">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="w-14 h-14 bg-white/20 rounded-2xl flex items-center justify-center">
+                            <i class="fas fa-coins text-2xl"></i>
+                        </div>
+                        <span class="text-xs bg-white/20 px-3 py-1 rounded-full">${t('total')}</span>
+                    </div>
+                    <p class="text-sm text-blue-100 mb-1">${t('total_balance')}</p>
+                    <p class="text-3xl font-black">${fmt(total)}</p>
+                </div>
+                
+                <div class="stat-card gradient-success rounded-3xl p-6 text-white shadow-xl card-hover">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="w-14 h-14 bg-white/20 rounded-2xl flex items-center justify-center">
+                            <i class="fas fa-arrow-down text-2xl"></i>
+                        </div>
+                        <span class="text-xs bg-white/20 px-3 py-1 rounded-full">${t('this_month')}: ${fmt(thisMonthDep)}</span>
+                    </div>
+                    <p class="text-sm text-green-100 mb-1">${t('total_deposits')}</p>
+                    <p class="text-3xl font-black">${fmt(deposits)}</p>
+                </div>
+                
+                <div class="stat-card gradient-danger rounded-3xl p-6 text-white shadow-xl card-hover">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="w-14 h-14 bg-white/20 rounded-2xl flex items-center justify-center">
+                            <i class="fas fa-arrow-up text-2xl"></i>
+                        </div>
+                        <span class="text-xs bg-white/20 px-3 py-1 rounded-full">${t('this_month')}: ${fmt(thisMonthWith)}</span>
+                    </div>
+                    <p class="text-sm text-red-100 mb-1">${t('total_withdrawals')}</p>
+                    <p class="text-3xl font-black">${fmt(withdrawals)}</p>
+                </div>
+                
+                <div class="stat-card bg-gradient-to-br from-purple-600 to-indigo-700 rounded-3xl p-6 text-white shadow-xl card-hover">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="w-14 h-14 bg-white/20 rounded-2xl flex items-center justify-center">
+                            <i class="fas fa-users text-2xl"></i>
+                        </div>
+                        <span class="text-xs bg-white/20 px-3 py-1 rounded-full">${WALLETS.length} ${t('wallets')}</span>
+                    </div>
+                    <p class="text-sm text-purple-100 mb-1">${t('total_clients')}</p>
+                    <p class="text-3xl font-black">${users.length}</p>
+                </div>
+            </div>
+            
+            <!-- إجراءات سريعة -->
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+                <button onclick="showAddPerson()" class="glass-card rounded-2xl p-5 text-center card-hover shadow-md hover:shadow-xl">
+                    <div class="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center mx-auto mb-3">
+                        <i class="fas fa-user-plus text-blue-600 text-xl"></i>
+                    </div>
+                    <p class="font-bold text-gray-700 text-sm">${t('add_person')}</p>
+                </button>
+                <button onclick="showAddWallet()" class="glass-card rounded-2xl p-5 text-center card-hover shadow-md hover:shadow-xl">
+                    <div class="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center mx-auto mb-3">
+                        <i class="fas fa-wallet text-purple-600 text-xl"></i>
+                    </div>
+                    <p class="font-bold text-gray-700 text-sm">${t('add_wallet')}</p>
+                </button>
+                <button onclick="showCreateInvoice()" class="glass-card rounded-2xl p-5 text-center card-hover shadow-md hover:shadow-xl">
+                    <div class="w-12 h-12 bg-amber-100 rounded-xl flex items-center justify-center mx-auto mb-3">
+                        <i class="fas fa-file-invoice text-amber-600 text-xl"></i>
+                    </div>
+                    <p class="font-bold text-gray-700 text-sm">${t('create_invoice')}</p>
+                </button>
+                <button onclick="CloudBackup.export()" class="glass-card rounded-2xl p-5 text-center card-hover shadow-md hover:shadow-xl">
+                    <div class="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center mx-auto mb-3">
+                        <i class="fas fa-cloud-download-alt text-green-600 text-xl"></i>
+                    </div>
+                    <p class="font-bold text-gray-700 text-sm">${t('backup_export')}</p>
+                </button>
+            </div>
+            
+            <div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
+                <!-- الرسم البياني -->
+                <div class="xl:col-span-2 glass-card rounded-3xl shadow-lg p-6">
+                    <h3 class="text-xl font-bold text-gray-800 mb-4">${t('income_vs_expense')}</h3>
+                    <div class="chart-container">
+                        <canvas id="mainChart"></canvas>
+                    </div>
+                </div>
+                
+                <!-- آخر العمليات -->
+                <div class="glass-card rounded-3xl shadow-lg overflow-hidden">
+                    <div class="p-5 border-b bg-gray-50/80">
+                        <h3 class="font-bold text-lg text-gray-800">${t('recent_transactions')}</h3>
+                    </div>
+                    <div class="divide-y max-h-[400px] overflow-y-auto scrollbar-thin">
+                        ${recentTrans.length === 0 ? `<div class="p-10 text-center text-gray-400"><i class="fas fa-inbox text-4xl mb-3 block"></i><p>${t('no_transactions')}</p></div>` :
+                        recentTrans.map(tr => `
+                            <div class="p-4 hover:bg-gray-50 transition">
+                                <div class="flex items-center justify-between">
+                                    <div class="flex items-center gap-3">
+                                        <div class="w-10 h-10 ${tr.type === 'deposit' ? 'bg-green-100' : 'bg-red-100'} rounded-xl flex items-center justify-center">
+                                            <i class="fas ${tr.type === 'deposit' ? 'fa-arrow-down text-green-600' : 'fa-arrow-up text-red-600'}"></i>
+                                        </div>
+                                        <div>
+                                            <p class="font-bold text-sm text-gray-800">${tr.userName}</p>
+                                            <p class="text-xs text-gray-500">${fmtDateShort(tr.date)}</p>
+                                        </div>
+                                    </div>
+                                    <p class="font-bold ${tr.type === 'deposit' ? 'text-green-600' : 'text-red-600'}">${tr.type === 'deposit' ? '+' : '-'}${fmt(tr.amount)}</p>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            </div>
+            
+            ${unpaidInvoices.length > 0 ? `
+            <!-- فواتير غير مدفوعة -->
+            <div class="mt-6 glass-card rounded-3xl shadow-lg p-6">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="font-bold text-lg text-gray-800"><i class="fas fa-exclamation-triangle text-amber-500 me-2"></i>${t('unpaid_invoices')} (${unpaidInvoices.length})</h3>
+                    <button onclick="navigate('invoices')" class="text-blue-600 font-bold hover:underline text-sm">${t('view_details')}</button>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    ${unpaidInvoices.slice(0, 3).map(inv => `
+                        <div class="border-2 border-amber-200 bg-amber-50 rounded-2xl p-4">
+                            <div class="flex justify-between items-start mb-2">
+                                <span class="font-bold text-gray-800">${inv.number}</span>
+                                <span class="text-xs bg-red-100 text-red-600 px-2 py-1 rounded-full font-bold">${t('invoice_unpaid')}</span>
+                            </div>
+                            <p class="text-sm text-gray-600 mb-2">${inv.clientName}</p>
+                            <p class="text-xl font-black text-amber-600">${fmt(inv.total)}</p>
+                            <p class="text-xs text-gray-500 mt-1">${t('due_date')}: ${fmtDate(inv.dueDate)}</p>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>` : ''}
+
+            <!-- المحافظ -->
+            ${WALLETS.length > 0 ? `
+            <div class="mt-6 glass-card rounded-3xl shadow-lg p-6">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="font-bold text-lg text-gray-800"><i class="fas fa-wallet text-purple-500 me-2"></i>${t('wallets')} (${fmt(walletTotal)})</h3>
+                    <button onclick="navigate('wallets')" class="text-blue-600 font-bold hover:underline text-sm">${t('view_details')}</button>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    ${WALLETS.slice(0, 3).map(w => {
+                        const typeIcon = w.type === 'cash' ? 'fa-money-bill-wave' : w.type === 'bank' ? 'fa-university' : 'fa-mobile-alt';
+                        const typeColor = w.type === 'cash' ? 'bg-green-100 text-green-600' : w.type === 'bank' ? 'bg-blue-100 text-blue-600' : 'bg-purple-100 text-purple-600';
+                        return `
+                        <div class="border rounded-2xl p-4 hover:shadow-md transition">
+                            <div class="flex items-center gap-3 mb-3">
+                                <div class="w-10 h-10 ${typeColor} rounded-xl flex items-center justify-center">
+                                    <i class="fas ${typeIcon}"></i>
+                                </div>
+                                <div>
+                                    <p class="font-bold text-gray-800">${w.name}</p>
+                                    <p class="text-xs text-gray-500">${t('wallet_' + w.type)}</p>
+                                </div>
+                            </div>
+                            <p class="text-2xl font-black text-gray-800">${fmt(w.balance)}</p>
+                        </div>`;
+                    }).join('')}
+                </div>
+            </div>` : ''}
+        </div>`;
+
+        // رسم بياني
+        setTimeout(() => {
+            const ctx = document.getElementById('mainChart');
+            if (!ctx) return;
+            
+            const months = [];
+            const depData = [];
+            const withData = [];
+            
+            for (let i = 5; i >= 0; i--) {
+                const d = new Date();
+                d.setMonth(d.getMonth() - i);
+                const monthName = d.toLocaleDateString(SETTINGS.lang === 'ar' ? 'ar' : 'en', { month: 'short' });
+                months.push(monthName);
+                
+                const monthTrans = allTrans.filter(tr => {
+                    const td = new Date(tr.date);
+                    return td.getMonth() === d.getMonth() && td.getFullYear() === d.getFullYear();
+                });
+                depData.push(monthTrans.filter(tr => tr.type === 'deposit').reduce((s, tr) => s + tr.amount, 0));
+                withData.push(monthTrans.filter(tr => tr.type === 'withdraw').reduce((s, tr) => s + tr.amount, 0));
+            }
+
+            const chart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: months,
+                    datasets: [
+                        {
+                            label: t('total_deposits'),
+                            data: depData,
+                            backgroundColor: 'rgba(16, 185, 129, 0.8)',
+                            borderRadius: 8,
+                            borderSkipped: false,
+                        },
+                        {
+                            label: t('total_withdrawals'),
+                            data: withData,
+                            backgroundColor: 'rgba(239, 68, 68, 0.8)',
+                            borderRadius: 8,
+                            borderSkipped: false,
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'top', labels: { font: { family: 'Cairo', size: 13 }, usePointStyle: true } }
+                    },
+                    scales: {
+                        y: { beginAtZero: true, grid: { color: 'rgba(0,0,0,0.05)' } },
+                        x: { grid: { display: false } }
+                    }
+                }
+            });
+            activeCharts.push(chart);
+        }, 100);
+    }
+
+    // === الحسابات ===
+    function renderAccounts(el) {
+        const users = DB.filter(x => x.role === 'user');
+        el.innerHTML = `
+        <div class="fade-in">
+            <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
+                <div class="relative flex-1 max-w-md">
+                    <i class="fas fa-search absolute top-1/2 -translate-y-1/2 ${SETTINGS.lang === 'ar' ? 'right-4' : 'left-4'} text-gray-400"></i>
+                    <input id="search-accounts" oninput="filterAccounts()" placeholder="${t('search')}" 
+                        class="w-full border-2 border-gray-200 ${SETTINGS.lang === 'ar' ? 'pr-12' : 'pl-12'} py-3 rounded-2xl focus:border-blue-500 outline-none text-lg transition">
+                </div>
+                <button onclick="showAddPerson()" class="gradient-primary text-white px-8 py-3 rounded-2xl font-bold shadow-lg hover:opacity-90 transition flex items-center gap-2 whitespace-nowrap">
+                    <i class="fas fa-user-plus"></i> ${t('add_person')}
+                </button>
+            </div>
+            
+            <div id="accounts-list" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+                ${users.length === 0 ? `
+                    <div class="col-span-full glass-card rounded-3xl p-16 text-center shadow-lg">
+                        <i class="fas fa-users text-6xl text-gray-300 mb-4"></i>
+                        <p class="text-xl text-gray-400 font-bold">${t('no_clients')}</p>
+                    </div>` :
+                users.map(u => `
+                    <div class="glass-card rounded-3xl shadow-lg overflow-hidden card-hover account-card" data-name="${u.name}" data-phone="${u.phone}">
+                        <div class="gradient-primary p-5 text-white">
+                            <div class="flex items-center gap-4">
+                                <div class="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center text-2xl font-black">
+                                    ${u.name.charAt(0)}
+                                </div>
+                                <div class="flex-1">
+                                    <h3 class="text-xl font-bold">${u.name}</h3>
+                                    <p class="text-blue-200 text-sm">${u.phone}</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="p-5">
+                            <div class="flex justify-between items-center mb-4">
+                                <span class="text-gray-500 text-sm">${t('total_balance_label')}</span>
+                                <span class="text-3xl font-black ${u.balance >= 0 ? 'text-green-600' : 'text-red-600'}">${fmt(u.balance)}</span>
+                            </div>
+                            <div class="flex gap-2 text-sm mb-4">
+                                <span class="bg-green-50 text-green-600 px-3 py-1 rounded-full">
+                                    <i class="fas fa-arrow-down me-1"></i>${u.log.filter(l => l.type === 'deposit').length}
+                                </span>
+                                <span class="bg-red-50 text-red-600 px-3 py-1 rounded-full">
+                                    <i class="fas fa-arrow-up me-1"></i>${u.log.filter(l => l.type === 'withdraw').length}
+                                </span>
+                                <span class="bg-blue-50 text-blue-600 px-3 py-1 rounded-full">
+                                    <i class="fas fa-receipt me-1"></i>${u.log.length} ${t('operations_count')}
+                                </span>
+                            </div>
+                            <div class="flex gap-2">
+                                <button onclick="openUserDetail(${u.id})" class="flex-1 bg-blue-50 hover:bg-blue-100 text-blue-600 py-3 rounded-xl font-bold transition">
+                                    <i class="fas fa-eye me-1"></i>${t('view_details')}
+                                </button>
+                                <button onclick="deleteUser(${u.id})" class="px-4 bg-red-50 hover:bg-red-100 text-red-600 py-3 rounded-xl font-bold transition">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `).join('')}
+            </div>
+        </div>`;
+    }
+
+    function filterAccounts() {
+        const query = document.getElementById('search-accounts')?.value.toLowerCase() || '';
+        document.querySelectorAll('.account-card').forEach(card => {
+            const name = card.dataset.name?.toLowerCase() || '';
+            const phone = card.dataset.phone?.toLowerCase() || '';
+            card.style.display = (name.includes(query) || phone.includes(query)) ? '' : 'none';
+        });
+    }
+
+    // === تفاصيل العميل ===
+    function renderUserDetail(el) {
+        if (!viewingUser) { renderAccounts(el); return; }
+        const u = DB.find(x => x.id === viewingUser.id) || viewingUser;
+        viewingUser = u;
+        const dep = u.log.filter(x => x.type === 'deposit').reduce((s, x) => s + x.amount, 0);
+        const wth = u.log.filter(x => x.type === 'withdraw').reduce((s, x) => s + x.amount, 0);
+
+        el.innerHTML = `
+        <div class="fade-in">
+            <button onclick="backToAccounts()" class="flex items-center gap-2 text-gray-600 hover:text-gray-800 font-bold mb-6 transition">
+                <i class="fas ${SETTINGS.lang === 'ar' ? 'fa-arrow-right' : 'fa-arrow-left'}"></i> ${t('back')}
+            </button>
+            
+            <!-- بطاقة الرصيد -->
+            <div class="dark-glass rounded-3xl p-8 mb-6 text-white shadow-2xl">
+                <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+                    <div class="flex items-center gap-5">
+                        <div class="w-20 h-20 bg-white/10 rounded-3xl flex items-center justify-center text-3xl font-black border-2 border-white/20">
+                            ${u.name.charAt(0)}
+                        </div>
+                        <div>
+                            <h2 class="text-3xl font-black">${u.name}</h2>
+                            <p class="text-slate-300">${u.phone}</p>
+                            ${u.createdAt ? `<p class="text-xs text-slate-400 mt-1">${t('date')}: ${fmtDate(u.createdAt)}</p>` : ''}
+                        </div>
+                    </div>
+                    <div class="text-${SETTINGS.lang === 'ar' ? 'left' : 'right'}">
+                        <p class="text-sm text-slate-300 mb-1">${t('total_balance_label')}</p>
+                        <p class="text-5xl font-black">${fmt(u.balance)}</p>
+                    </div>
+                </div>
+                <div class="flex gap-4 mt-8">
+                    <button onclick="showTransaction('dep')" class="flex-1 gradient-success py-4 rounded-2xl font-bold text-lg shadow-lg hover:opacity-90 transition flex items-center justify-center gap-2">
+                        <i class="fas fa-arrow-down text-xl"></i> ${t('deposit')}
+                    </button>
+                    <button onclick="showTransaction('with')" class="flex-1 gradient-danger py-4 rounded-2xl font-bold text-lg shadow-lg hover:opacity-90 transition flex items-center justify-center gap-2">
+                        <i class="fas fa-arrow-up text-xl"></i> ${t('withdraw')}
+                    </button>
+                </div>
+            </div>
+            
+            <!-- إحصائيات -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-5 mb-6">
+                <div class="glass-card rounded-2xl p-6 shadow-md">
+                    <div class="flex items-center gap-3 mb-3">
+                        <div class="w-10 h-10 bg-green-100 rounded-xl flex items-center justify-center">
+                            <i class="fas fa-arrow-down text-green-600"></i>
+                        </div>
+                        <span class="text-gray-500 text-sm">${t('total_deposits')}</span>
+                    </div>
+                    <p class="text-3xl font-black text-green-600">${fmt(dep)}</p>
+                </div>
+                <div class="glass-card rounded-2xl p-6 shadow-md">
+                    <div class="flex items-center gap-3 mb-3">
+                        <div class="w-10 h-10 bg-red-100 rounded-xl flex items-center justify-center">
+                            <i class="fas fa-arrow-up text-red-600"></i>
+                        </div>
+                        <span class="text-gray-500 text-sm">${t('total_withdrawals')}</span>
+                    </div>
+                    <p class="text-3xl font-black text-red-600">${fmt(wth)}</p>
+                </div>
+                <div class="glass-card rounded-2xl p-6 shadow-md">
+                    <div class="flex items-center gap-3 mb-3">
+                        <div class="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center">
+                            <i class="fas fa-chart-line text-blue-600"></i>
+                        </div>
+                        <span class="text-gray-500 text-sm">${t('operations_count')}</span>
+                    </div>
+                    <p class="text-3xl font-black text-blue-600">${u.log.length}</p>
+                </div>
+            </div>
+            
+            <!-- الرسم البياني -->
+            <div class="glass-card rounded-3xl shadow-lg p-6 mb-6">
+                <h3 class="text-xl font-bold text-gray-800 mb-4">${t('monthly_trend')}</h3>
+                <div class="chart-container"><canvas id="userChart"></canvas></div>
+            </div>
+            
+            <!-- سجل العمليات -->
+            <div class="glass-card rounded-3xl shadow-lg overflow-hidden">
+                <div class="p-5 border-b bg-gray-50/80 flex items-center justify-between">
+                    <h3 class="font-bold text-lg text-gray-800"><i class="fas fa-history me-2"></i>${t('transaction_log')}</h3>
+                    <div class="flex gap-2">
+                        <button onclick="filterUserTrans('all')" class="px-3 py-1 rounded-full text-xs font-bold bg-gray-200 hover:bg-gray-300 transition trans-filter active" data-filter="all">${t('filter_all')}</button>
+                        <button onclick="filterUserTrans('deposit')" class="px-3 py-1 rounded-full text-xs font-bold bg-gray-200 hover:bg-green-100 text-green-600 transition trans-filter" data-filter="deposit">${t('filter_deposits')}</button>
+                        <button onclick="filterUserTrans('withdraw')" class="px-3 py-1 rounded-full text-xs font-bold bg-gray-200 hover:bg-red-100 text-red-600 transition trans-filter" data-filter="withdraw">${t('filter_withdrawals')}</button>
+                    </div>
+                </div>
+                <div class="divide-y max-h-[600px] overflow-y-auto scrollbar-thin" id="user-trans-list">
+                    ${u.log.length === 0 ? `<div class="p-16 text-center text-gray-400"><i class="fas fa-inbox text-5xl mb-4 block"></i><p class="text-lg">${t('no_transactions')}</p></div>` :
+                    u.log.map(tr => {
+                        const cat = CATEGORIES.find(c => c.id === tr.category);
+                        const catName = cat ? (SETTINGS.lang === 'ar' ? cat.name_ar : cat.name_en) : '';
+                        return `
+                        <div class="p-5 hover:bg-gray-50 transition trans-item" data-type="${tr.type}">
+                            <div class="flex items-center justify-between mb-2">
+                                <div class="flex items-center gap-4">
+                                    <div class="w-12 h-12 ${tr.type === 'deposit' ? 'bg-green-100' : 'bg-red-100'} rounded-2xl flex items-center justify-center shadow-sm">
+                                        <i class="fas ${tr.type === 'deposit' ? 'fa-arrow-down text-green-600' : 'fa-arrow-up text-red-600'} text-lg"></i>
+                                    </div>
+                                    <div>
+                                        <p class="font-bold text-lg ${tr.type === 'deposit' ? 'text-green-700' : 'text-red-700'}">${tr.type === 'deposit' ? t('deposit') : t('withdraw')}</p>
+                                        <div class="flex items-center gap-2">
+                                            <p class="text-xs text-gray-500">${fmtDate(tr.date)}</p>
+                                            ${catName ? `<span class="text-xs bg-gray-100 px-2 py-0.5 rounded-full">${catName}</span>` : ''}
+                                        </div>
+                                    </div>
+                                </div>
+                                <p class="text-2xl font-black ${tr.type === 'deposit' ? 'text-green-600' : 'text-red-600'}">${tr.type === 'deposit' ? '+' : '-'}${fmt(tr.amount)}</p>
+                            </div>
+                            ${tr.note ? `<p class="text-sm text-gray-600 ${SETTINGS.lang === 'ar' ? 'mr-16' : 'ml-16'} bg-gray-50 p-3 rounded-xl">${tr.note}</p>` : ''}
+                        </div>`;
+                    }).join('')}
+                </div>
+            </div>
+        </div>`;
+
+        // رسم بياني للمستخدم
+        setTimeout(() => {
+            const ctx = document.getElementById('userChart');
+            if (!ctx) return;
+            const months = [];
+            const depD = [];
+            const withD = [];
+            for (let i = 5; i >= 0; i--) {
+                const d = new Date(); d.setMonth(d.getMonth() - i);
+                months.push(d.toLocaleDateString(SETTINGS.lang === 'ar' ? 'ar' : 'en', { month: 'short' }));
+                const mTrans = u.log.filter(tr => { const td = new Date(tr.date); return td.getMonth() === d.getMonth() && td.getFullYear() === d.getFullYear(); });
+                depD.push(mTrans.filter(tr => tr.type === 'deposit').reduce((s, tr) => s + tr.amount, 0));
+                withD.push(mTrans.filter(tr => tr.type === 'withdraw').reduce((s, tr) => s + tr.amount, 0));
+            }
+            const chart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: months,
+                    datasets: [
+                        { label: t('total_deposits'), data: depD, borderColor: '#10b981', backgroundColor: 'rgba(16,185,129,0.1)', tension: 0.4, fill: true, pointRadius: 6, pointBackgroundColor: '#10b981' },
+                        { label: t('total_withdrawals'), data: withD, borderColor: '#ef4444', backgroundColor: 'rgba(239,68,68,0.1)', tension: 0.4, fill: true, pointRadius: 6, pointBackgroundColor: '#ef4444' }
+                    ]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: { legend: { position: 'top', labels: { font: { family: 'Cairo', size: 13 }, usePointStyle: true } } },
+                    scales: { y: { beginAtZero: true, grid: { color: 'rgba(0,0,0,0.05)' } }, x: { grid: { display: false } } }
+                }
+            });
+            activeCharts.push(chart);
+        }, 100);
+    }
+
+    function filterUserTrans(type) {
+        document.querySelectorAll('.trans-filter').forEach(btn => btn.classList.remove('active', 'bg-blue-500', 'text-white'));
+        document.querySelector(`.trans-filter[data-filter="${type}"]`)?.classList.add('bg-blue-500', 'text-white');
+        document.querySelectorAll('.trans-item').forEach(item => {
+            item.style.display = (type === 'all' || item.dataset.type === type) ? '' : 'none';
+        });
+    }
+
+    // === المحافظ ===
+    function renderWallets(el) {
+        const totalWallets = WALLETS.reduce((s, w) => s + w.balance, 0);
+        el.innerHTML = `
+        <div class="fade-in">
+            <!-- إجمالي المحافظ -->
+            <div class="bg-gradient-to-r from-purple-600 to-indigo-700 rounded-3xl p-8 mb-6 text-white shadow-xl">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-purple-200 mb-2">${t('wallet_balance')}</p>
+                        <p class="text-5xl font-black">${fmt(totalWallets)}</p>
+                        <p class="text-purple-200 mt-2">${WALLETS.length} ${t('wallets')}</p>
+                    </div>
+                    <div class="flex gap-3">
+                        <button onclick="showAddWallet()" class="bg-white/20 hover:bg-white/30 px-6 py-3 rounded-xl font-bold transition">
+                            <i class="fas fa-plus me-2"></i>${t('add_wallet')}
+                        </button>
+                        <button onclick="showWalletTransfer()" class="bg-white/20 hover:bg-white/30 px-6 py-3 rounded-xl font-bold transition">
+                            <i class="fas fa-exchange-alt me-2"></i>${t('transfer')}
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+                ${WALLETS.length === 0 ? `
+                    <div class="col-span-full glass-card rounded-3xl p-16 text-center shadow-lg">
+                        <i class="fas fa-wallet text-6xl text-gray-300 mb-4"></i>
+                        <p class="text-xl text-gray-400 font-bold">${t('no_wallets')}</p>
+                    </div>` :
+                WALLETS.map(w => {
+                    const typeIcon = w.type === 'cash' ? 'fa-money-bill-wave' : w.type === 'bank' ? 'fa-university' : 'fa-mobile-alt';
+                    const gradients = { cash: 'from-green-500 to-emerald-600', bank: 'from-blue-500 to-indigo-600', digital: 'from-purple-500 to-pink-600' };
+                    return `
+                    <div class="glass-card rounded-3xl shadow-lg overflow-hidden card-hover">
+                        <div class="bg-gradient-to-r ${gradients[w.type] || gradients.cash} p-5 text-white">
+                            <div class="flex items-center justify-between mb-4">
+                                <div class="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
+                                    <i class="fas ${typeIcon} text-xl"></i>
+                                </div>
+                                <span class="text-xs bg-white/20 px-3 py-1 rounded-full">${t('wallet_' + w.type)}</span>
+                            </div>
+                            <h3 class="text-xl font-bold">${w.name}</h3>
+                            <p class="text-3xl font-black mt-2">${fmt(w.balance)}</p>
+                        </div>
+                        <div class="p-5">
+                            <div class="flex gap-2 mb-3">
+                                <button onclick="showWalletDeposit(${w.id})" class="flex-1 bg-green-50 hover:bg-green-100 text-green-600 py-2.5 rounded-xl font-bold text-sm transition">
+                                    <i class="fas fa-plus me-1"></i>${t('deposit')}
+                                </button>
+                                <button onclick="showWalletWithdraw(${w.id})" class="flex-1 bg-red-50 hover:bg-red-100 text-red-600 py-2.5 rounded-xl font-bold text-sm transition">
+                                    <i class="fas fa-minus me-1"></i>${t('withdraw')}
+                                </button>
+                                <button onclick="deleteWallet(${w.id})" class="px-3 bg-gray-50 hover:bg-gray-100 text-gray-500 py-2.5 rounded-xl transition">
+                                    <i class="fas fa-trash text-sm"></i>
+                                </button>
+                            </div>
+                            <p class="text-xs text-gray-400">${w.log.length} ${t('operations_count')}</p>
+                        </div>
+                    </div>`;
+                }).join('')}
+            </div>
+        </div>`;
+    }
+
+    // === العمليات ===
+    function renderTransactions(el) {
+        const allTrans = getAllTransactions();
+        el.innerHTML = `
+        <div class="fade-in">
+            <div class="flex flex-wrap gap-3 mb-6">
+                <button onclick="filterGlobalTrans('all')" class="px-5 py-2.5 rounded-xl font-bold bg-blue-600 text-white transition g-filter" data-filter="all">${t('filter_all')} (${allTrans.length})</button>
+                <button onclick="filterGlobalTrans('deposit')" class="px-5 py-2.5 rounded-xl font-bold bg-gray-100 text-gray-600 hover:bg-green-100 hover:text-green-600 transition g-filter" data-filter="deposit">${t('filter_deposits')} (${allTrans.filter(t=>t.type==='deposit').length})</button>
+                <button onclick="filterGlobalTrans('withdraw')" class="px-5 py-2.5 rounded-xl font-bold bg-gray-100 text-gray-600 hover:bg-red-100 hover:text-red-600 transition g-filter" data-filter="withdraw">${t('filter_withdrawals')} (${allTrans.filter(t=>t.type==='withdraw').length})</button>
+                <div class="flex-1"></div>
+                <button onclick="exportCSV()" class="px-5 py-2.5 rounded-xl font-bold bg-gray-100 text-gray-600 hover:bg-gray-200 transition">
+                    <i class="fas fa-download me-2"></i>${t('export_csv')}
+                </button>
+            </div>
+            
+            <div class="glass-card rounded-3xl shadow-lg overflow-hidden">
+                <div class="divide-y max-h-[700px] overflow-y-auto scrollbar-thin" id="global-trans-list">
+                    ${allTrans.length === 0 ? `<div class="p-16 text-center text-gray-400"><i class="fas fa-inbox text-5xl mb-4 block"></i><p class="text-lg">${t('no_transactions')}</p></div>` :
+                    allTrans.map(tr => {
+                        const cat = CATEGORIES.find(c => c.id === tr.category);
+                        return `
+                        <div class="p-5 hover:bg-gray-50 transition g-trans-item" data-type="${tr.type}">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center gap-4">
+                                    <div class="w-12 h-12 ${tr.type === 'deposit' ? 'bg-green-100' : 'bg-red-100'} rounded-2xl flex items-center justify-center">
+                                        <i class="fas ${tr.type === 'deposit' ? 'fa-arrow-down text-green-600' : 'fa-arrow-up text-red-600'} text-lg"></i>
+                                    </div>
+                                    <div>
+                                        <p class="font-bold text-gray-800">${tr.userName}</p>
+                                        <div class="flex items-center gap-2">
+                                            <span class="text-xs text-gray-500">${fmtDate(tr.date)}</span>
+                                            <span class="text-xs ${tr.type === 'deposit' ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-600'} px-2 py-0.5 rounded-full">${tr.type === 'deposit' ? t('deposit') : t('withdraw')}</span>
+                                            ${cat ? `<span class="text-xs bg-gray-100 px-2 py-0.5 rounded-full">${SETTINGS.lang === 'ar' ? cat.name_ar : cat.name_en}</span>` : ''}
+                                        </div>
+                                        ${tr.note ? `<p class="text-sm text-gray-500 mt-1">${tr.note}</p>` : ''}
+                                    </div>
+                                </div>
+                                <p class="text-2xl font-black ${tr.type === 'deposit' ? 'text-green-600' : 'text-red-600'}">${tr.type === 'deposit' ? '+' : '-'}${fmt(tr.amount)}</p>
+                            </div>
+                        </div>`;
+                    }).join('')}
+                </div>
+            </div>
+        </div>`;
+    }
+
+    function filterGlobalTrans(type) {
+        document.querySelectorAll('.g-filter').forEach(btn => { btn.className = btn.className.replace(/bg-blue-600 text-white/g, 'bg-gray-100 text-gray-600'); });
+        document.querySelector(`.g-filter[data-filter="${type}"]`).className = document.querySelector(`.g-filter[data-filter="${type}"]`).className.replace(/bg-gray-100 text-gray-600/g, 'bg-blue-600 text-white');
+        document.querySelectorAll('.g-trans-item').forEach(item => {
+            item.style.display = (type === 'all' || item.dataset.type === type) ? '' : 'none';
+        });
+    }
+
+    // === الفواتير ===
+    function renderInvoices(el) {
+        const totalInv = INVOICES.reduce((s, inv) => s + inv.total, 0);
+        const paidTotal = INVOICES.filter(inv => inv.status === 'paid').reduce((s, inv) => s + inv.total, 0);
+        const unpaidTotal = INVOICES.filter(inv => inv.status !== 'paid').reduce((s, inv) => s + (inv.total - inv.paid), 0);
+
+        el.innerHTML = `
+        <div class="fade-in">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-5 mb-6">
+                <div class="glass-card rounded-2xl p-6 shadow-md">
+                    <p class="text-sm text-gray-500 mb-2">${t('all_invoices')}</p>
+                    <p class="text-3xl font-black text-gray-800">${fmt(totalInv)}</p>
+                    <p class="text-xs text-gray-400 mt-1">${INVOICES.length} ${t('invoice')}</p>
+                </div>
+                <div class="glass-card rounded-2xl p-6 shadow-md">
+                    <p class="text-sm text-gray-500 mb-2">${t('amount_paid')}</p>
+                    <p class="text-3xl font-black text-green-600">${fmt(paidTotal)}</p>
+                </div>
+                <div class="glass-card rounded-2xl p-6 shadow-md">
+                    <p class="text-sm text-gray-500 mb-2">${t('amount_due')}</p>
+                    <p class="text-3xl font-black text-red-600">${fmt(unpaidTotal)}</p>
+                </div>
+            </div>
+            
+            <div class="flex items-center justify-between mb-6">
+                <div class="flex gap-2" id="inv-filters">
+                    <button onclick="filterInvoices('all')" class="px-4 py-2 rounded-xl font-bold bg-blue-600 text-white inv-filter" data-f="all">${t('filter_all')}</button>
+                    <button onclick="filterInvoices('paid')" class="px-4 py-2 rounded-xl font-bold bg-gray-100 text-gray-600 inv-filter" data-f="paid">${t('paid_invoices')}</button>
+                    <button onclick="filterInvoices('unpaid')" class="px-4 py-2 rounded-xl font-bold bg-gray-100 text-gray-600 inv-filter" data-f="unpaid">${t('unpaid_invoices')}</button>
+                </div>
+                <button onclick="showCreateInvoice()" class="gradient-gold text-white px-6 py-3 rounded-xl font-bold shadow-lg hover:opacity-90 transition">
+                    <i class="fas fa-plus me-2"></i>${t('create_invoice')}
+                </button>
+            </div>
+            
+            <div class="space-y-4" id="invoices-list">
+                ${INVOICES.length === 0 ? `
+                    <div class="glass-card rounded-3xl p-16 text-center shadow-lg">
+                        <i class="fas fa-file-invoice text-6xl text-gray-300 mb-4"></i>
+                        <p class="text-xl text-gray-400 font-bold">${t('no_invoices')}</p>
+                    </div>` :
+                [...INVOICES].reverse().map(inv => `
+                    <div class="glass-card rounded-2xl shadow-md overflow-hidden inv-item" data-status="${inv.status}">
+                        <div class="p-5">
+                            <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                                <div class="flex items-center gap-4">
+                                    <div class="w-14 h-14 ${inv.status === 'paid' ? 'bg-green-100' : 'bg-amber-100'} rounded-2xl flex items-center justify-center">
+                                        <i class="fas ${inv.status === 'paid' ? 'fa-check-circle text-green-600' : 'fa-clock text-amber-600'} text-xl"></i>
+                                    </div>
+                                    <div>
+                                        <h4 class="font-bold text-lg text-gray-800">${inv.number}</h4>
+                                        <p class="text-sm text-gray-500">${inv.clientName} • ${fmtDate(inv.createdAt)}</p>
+                                        ${inv.description ? `<p class="text-sm text-gray-400">${inv.description}</p>` : ''}
+                                    </div>
+                                </div>
+                                <div class="flex items-center gap-4">
+                                    <div class="text-${SETTINGS.lang === 'ar' ? 'left' : 'right'}">
+                                        <p class="text-2xl font-black text-gray-800">${fmt(inv.total)}</p>
+                                        <span class="text-xs px-3 py-1 rounded-full font-bold ${inv.status === 'paid' ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'}">${inv.status === 'paid' ? t('invoice_paid') : t('invoice_unpaid')}</span>
+                                    </div>
+                                    <div class="flex gap-2">
+                                        ${inv.status !== 'paid' ? `<button onclick="markInvoicePaid(${inv.id})" class="p-2.5 bg-green-50 hover:bg-green-100 text-green-600 rounded-xl transition" title="${t('mark_paid')}"><i class="fas fa-check"></i></button>` : ''}
+                                        <button onclick="printInvoice(${inv.id})" class="p-2.5 bg-blue-50 hover:bg-blue-100 text-blue-600 rounded-xl transition" title="${t('print_invoice')}"><i class="fas fa-print"></i></button>
+                                        <button onclick="deleteInvoice(${inv.id})" class="p-2.5 bg-red-50 hover:bg-red-100 text-red-600 rounded-xl transition" title="${t('delete')}"><i class="fas fa-trash"></i></button>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- البنود -->
+                            <div class="mt-4 bg-gray-50 rounded-xl p-4">
+                                <table class="w-full text-sm">
+                                    <thead>
+                                        <tr class="text-gray-500">
+                                            <th class="text-${SETTINGS.lang === 'ar' ? 'right' : 'left'} pb-2">${t('item_name')}</th>
+                                            <th class="text-center pb-2">${t('item_qty')}</th>
+                                            <th class="text-center pb-2">${t('item_price')}</th>
+                                            <th class="text-center pb-2">${t('total')}</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        ${inv.items.map(it => `
+                                            <tr class="border-t border-gray-200">
+                                                <td class="py-2">${it.name}</td>
+                                                <td class="text-center py-2">${it.qty}</td>
+                                                <td class="text-center py-2">${fmt(it.price)}</td>
+                                                <td class="text-center py-2 font-bold">${fmt(it.qty * it.price)}</td>
+                                            </tr>
+                                        `).join('')}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                `).join('')}
+            </div>
+        </div>`;
+    }
+
+    function filterInvoices(status) {
+        document.querySelectorAll('.inv-filter').forEach(btn => { btn.className = btn.className.replace(/bg-blue-600 text-white/g, 'bg-gray-100 text-gray-600'); });
+        document.querySelector(`.inv-filter[data-f="${status}"]`).className = document.querySelector(`.inv-filter[data-f="${status}"]`).className.replace(/bg-gray-100 text-gray-600/g, 'bg-blue-600 text-white');
+        document.querySelectorAll('.inv-item').forEach(item => {
+            item.style.display = (status === 'all' || item.dataset.status === status) ? '' : 'none';
+        });
+    }
+
+    // === التقارير ===
+    function renderReports(el) {
+        const users = DB.filter(x => x.role === 'user');
+        const allTrans = getAllTransactions();
+        const deposits = allTrans.filter(t => t.type === 'deposit');
+        const withdrawals = allTrans.filter(t => t.type === 'withdraw');
+        const totalDep = deposits.reduce((s, t) => s + t.amount, 0);
+        const totalWith = withdrawals.reduce((s, t) => s + t.amount, 0);
+        const netFlow = totalDep - totalWith;
+        const avgTrans = allTrans.length > 0 ? (totalDep + totalWith) / allTrans.length : 0;
+        const largestDep = deposits.length > 0 ? Math.max(...deposits.map(t => t.amount)) : 0;
+        const largestWith = withdrawals.length > 0 ? Math.max(...withdrawals.map(t => t.amount)) : 0;
+
+        // أكبر العملاء
+        const topClients = [...users].sort((a, b) => b.balance - a.balance).slice(0, 5);
+
+        // نسبة الإيداعات للسحوبات
+        const depPercent = (totalDep + totalWith) > 0 ? Math.round((totalDep / (totalDep + totalWith)) * 100) : 50;
+
+        el.innerHTML = `
+        <div class="fade-in">
+            <!-- ملخص -->
+            <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-5 mb-8">
+                <div class="glass-card rounded-2xl p-6 shadow-md card-hover">
+                    <div class="flex items-center gap-3 mb-3">
+                        <div class="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center"><i class="fas fa-chart-line text-blue-600"></i></div>
+                        <span class="text-sm text-gray-500">${t('net_flow')}</span>
+                    </div>
+                    <p class="text-3xl font-black ${netFlow >= 0 ? 'text-green-600' : 'text-red-600'}">${fmt(netFlow)}</p>
+                </div>
+                <div class="glass-card rounded-2xl p-6 shadow-md card-hover">
+                    <div class="flex items-center gap-3 mb-3">
+                        <div class="w-10 h-10 bg-purple-100 rounded-xl flex items-center justify-center"><i class="fas fa-calculator text-purple-600"></i></div>
+                        <span class="text-sm text-gray-500">${t('avg_transaction')}</span>
+                    </div>
+                    <p class="text-3xl font-black text-purple-600">${fmt(avgTrans)}</p>
+                </div>
+                <div class="glass-card rounded-2xl p-6 shadow-md card-hover">
+                    <div class="flex items-center gap-3 mb-3">
+                        <div class="w-10 h-10 bg-green-100 rounded-xl flex items-center justify-center"><i class="fas fa-arrow-down text-green-600"></i></div>
+                        <span class="text-sm text-gray-500">${t('largest_deposit')}</span>
+                    </div>
+                    <p class="text-3xl font-black text-green-600">${fmt(largestDep)}</p>
+                </div>
+                <div class="glass-card rounded-2xl p-6 shadow-md card-hover">
+                    <div class="flex items-center gap-3 mb-3">
+                        <div class="w-10 h-10 bg-red-100 rounded-xl flex items-center justify-center"><i class="fas fa-arrow-up text-red-600"></i></div>
+                        <span class="text-sm text-gray-500">${t('largest_withdrawal')}</span>
+                    </div>
+                    <p class="text-3xl font-black text-red-600">${fmt(largestWith)}</p>
+                </div>
+            </div>
+            
+            <div class="grid grid-cols-1 xl:grid-cols-2 gap-6 mb-8">
+                <!-- دائرة النسب -->
+                <div class="glass-card rounded-3xl shadow-lg p-6">
+                    <h3 class="text-xl font-bold text-gray-800 mb-4">${t('income_vs_expense')}</h3>
+                    <div class="chart-container"><canvas id="pieChart"></canvas></div>
+                </div>
+                
+                <!-- الاتجاه الشهري -->
+                <div class="glass-card rounded-3xl shadow-lg p-6">
+                    <h3 class="text-xl font-bold text-gray-800 mb-4">${t('monthly_trend')}</h3>
+                    <div class="chart-container"><canvas id="trendChart"></canvas></div>
+                </div>
+            </div>
+            
+            <!-- أكبر العملاء -->
+            <div class="glass-card rounded-3xl shadow-lg p-6 mb-6">
+                <div class="flex items-center justify-between mb-6">
+                    <h3 class="text-xl font-bold text-gray-800">${t('top_clients')}</h3>
+                    <button onclick="exportCSV()" class="bg-gray-100 hover:bg-gray-200 px-5 py-2.5 rounded-xl font-bold text-gray-600 transition">
+                        <i class="fas fa-download me-2"></i>${t('export_csv')}
+                    </button>
+                </div>
+                <div class="space-y-4">
+                    ${topClients.map((c, i) => {
+                        const maxBal = topClients[0]?.balance || 1;
+                        const percent = Math.round((c.balance / maxBal) * 100);
+                        const colors = ['bg-amber-500', 'bg-gray-400', 'bg-orange-400', 'bg-blue-400', 'bg-purple-400'];
+                        return `
+                        <div class="flex items-center gap-4">
+                            <div class="w-10 h-10 ${colors[i]} rounded-xl flex items-center justify-center text-white font-black">${i + 1}</div>
+                            <div class="flex-1">
+                                <div class="flex justify-between items-center mb-1">
+                                    <span class="font-bold text-gray-800">${c.name}</span>
+                                    <span class="font-black text-gray-800">${fmt(c.balance)}</span>
+                                </div>
+                                <div class="w-full bg-gray-100 rounded-full h-3">
+                                    <div class="h-3 rounded-full ${colors[i]} transition-all duration-1000" style="width:${percent}%"></div>
+                                </div>
+                            </div>
+                        </div>`;
+                    }).join('')}
+                    ${topClients.length === 0 ? `<p class="text-center text-gray-400 py-8">${t('no_data')}</p>` : ''}
+                </div>
+            </div>
+
+            <!-- تقرير السحوبات التفصيلي -->
+            <div class="glass-card rounded-3xl shadow-lg overflow-hidden">
+                <div class="p-5 border-b bg-gray-50/80">
+                    <h3 class="font-bold text-lg text-gray-800"><i class="fas fa-file-alt me-2 text-red-500"></i>${t('filter_withdrawals')} - ${t('report_title')}</h3>
+                </div>
+                <div class="divide-y max-h-[500px] overflow-y-auto scrollbar-thin">
+                    ${withdrawals.length === 0 ? `<div class="p-10 text-center text-gray-400">${t('no_data')}</div>` :
+                    withdrawals.slice(0, 20).map(tr => `
+                        <div class="p-4 hover:bg-red-50/50 transition">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-10 h-10 bg-red-100 rounded-xl flex items-center justify-center">
+                                        <i class="fas fa-arrow-up text-red-600"></i>
+                                    </div>
+                                    <div>
+                                        <p class="font-bold text-gray-800">${tr.userName}</p>
+                                        <p class="text-xs text-gray-500">${fmtDate(tr.date)} ${tr.note ? '• ' + tr.note : ''}</p>
+                                    </div>
+                                </div>
+                                <p class="text-xl font-black text-red-600">-${fmt(tr.amount)}</p>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+        </div>`;
+
+        // الرسوم البيانية
+        setTimeout(() => {
+            // دائرة
+            const pieCtx = document.getElementById('pieChart');
+            if (pieCtx) {
+                const chart1 = new Chart(pieCtx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: [t('total_deposits'), t('total_withdrawals')],
+                        datasets: [{
+                            data: [totalDep, totalWith],
+                            backgroundColor: ['rgba(16,185,129,0.8)', 'rgba(239,68,68,0.8)'],
+                            borderWidth: 0,
+                            hoverOffset: 10
+                        }]
+                    },
+                    options: {
+                        responsive: true, maintainAspectRatio: false,
+                        cutout: '65%',
+                        plugins: {
+                            legend: { position: 'bottom', labels: { font: { family: 'Cairo', size: 14 }, usePointStyle: true, padding: 20 } }
+                        }
+                    }
+                });
+                activeCharts.push(chart1);
+            }
+
+            // اتجاه
+            const trendCtx = document.getElementById('trendChart');
+            if (trendCtx) {
+                const months = [];
+                const netData = [];
+                for (let i = 11; i >= 0; i--) {
+                    const d = new Date(); d.setMonth(d.getMonth() - i);
+                    months.push(d.toLocaleDateString(SETTINGS.lang === 'ar' ? 'ar' : 'en', { month: 'short' }));
+                    const mTrans = allTrans.filter(tr => { const td = new Date(tr.date); return td.getMonth() === d.getMonth() && td.getFullYear() === d.getFullYear(); });
+                    const mDep = mTrans.filter(tr => tr.type === 'deposit').reduce((s, tr) => s + tr.amount, 0);
+                    const mWith = mTrans.filter(tr => tr.type === 'withdraw').reduce((s, tr) => s + tr.amount, 0);
+                    netData.push(mDep - mWith);
+                }
+                const chart2 = new Chart(trendCtx, {
+                    type: 'line',
+                    data: {
+                        labels: months,
+                        datasets: [{
+                            label: t('net_flow'),
+                            data: netData,
+                            borderColor: '#3b82f6',
+                            backgroundColor: 'rgba(59,130,246,0.1)',
+                            tension: 0.4,
+                            fill: true,
+                            pointRadius: 4,
+                            pointBackgroundColor: '#3b82f6'
+                        }]
+                    },
+                    options: {
+                        responsive: true, maintainAspectRatio: false,
+                        plugins: { legend: { position: 'top', labels: { font: { family: 'Cairo', size: 13 }, usePointStyle: true } } },
+                        scales: { y: { grid: { color: 'rgba(0,0,0,0.05)' } }, x: { grid: { display: false } } }
+                    }
+                });
+                activeCharts.push(chart2);
+            }
+        }, 100);
+    }
+
+    // === النسخ الاحتياطي ===
+    function renderBackup(el) {
+        const lastBackup = localStorage.getItem('chouikh_last_backup');
+        const lastDate = lastBackup ? new Date(parseInt(lastBackup)).toLocaleString(SETTINGS.lang === 'ar' ? 'ar' : 'en') : '-';
+
+        el.innerHTML = `
+        <div class="fade-in max-w-2xl mx-auto">
+            <div class="glass-card rounded-3xl shadow-lg p-8 mb-6">
+                <div class="text-center mb-8">
+                    <div class="w-20 h-20 bg-gradient-to-br from-green-500 to-emerald-600 rounded-3xl flex items-center justify-center mx-auto mb-4 shadow-xl">
+                        <i class="fas fa-cloud text-white text-3xl"></i>
+                    </div>
+                    <h2 class="text-3xl font-black text-gray-800 mb-2">${t('backup_title')}</h2>
+                    <p class="text-gray-500">${t('data_encrypted')}</p>
+                </div>
+                
+                <div class="space-y-4">
+                    <button onclick="CloudBackup.export()" class="w-full bg-gradient-to-r from-green-500 to-emerald-600 text-white p-5 rounded-2xl font-bold text-lg shadow-lg hover:opacity-90 transition flex items-center justify-center gap-3">
+                        <i class="fas fa-cloud-download-alt text-2xl"></i>
+                        ${t('backup_export')}
+                    </button>
+                    
+                    <button onclick="CloudBackup.import()" class="w-full bg-gradient-to-r from-blue-500 to-indigo-600 text-white p-5 rounded-2xl font-bold text-lg shadow-lg hover:opacity-90 transition flex items-center justify-center gap-3">
+                        <i class="fas fa-cloud-upload-alt text-2xl"></i>
+                        ${t('backup_import')}
+                    </button>
+                </div>
+                
+                <div class="mt-6 bg-gray-50 rounded-2xl p-5">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-3">
+                            <i class="fas fa-clock text-gray-400 text-xl"></i>
+                            <span class="font-bold text-gray-700">${t('backup_auto')}</span>
+                        </div>
+                        <span class="text-sm text-gray-500">${lastDate}</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- معلومات الأمان -->
+            <div class="glass-card rounded-3xl shadow-lg p-8">
+                <h3 class="text-xl font-bold text-gray-800 mb-6"><i class="fas fa-shield-alt text-green-500 me-2"></i>${t('security')}</h3>
+                <div class="space-y-4">
+                    <div class="flex items-center gap-4 p-4 bg-green-50 rounded-2xl">
+                        <div class="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
+                            <i class="fas fa-lock text-green-600 text-xl"></i>
+                        </div>
+                        <div>
+                            <p class="font-bold text-green-800">${t('encryption_active')}</p>
+                            <p class="text-sm text-green-600">${t('data_encrypted')}</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-4 p-4 bg-blue-50 rounded-2xl">
+                        <div class="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
+                            <i class="fas fa-fingerprint text-blue-600 text-xl"></i>
+                        </div>
+                        <div>
+                            <p class="font-bold text-blue-800">${t('biometric_protection')}</p>
+                            <p class="text-sm text-blue-600">${t('biometric_prompt')}</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-4 p-4 bg-purple-50 rounded-2xl">
+                        <div class="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center">
+                            <i class="fas fa-database text-purple-600 text-xl"></i>
+                        </div>
+                        <div>
+                            <p class="font-bold text-purple-800">${t('auto_backup')}</p>
+                            <p class="text-sm text-purple-600">${DB.length} ${t('accounts')} • ${WALLETS.length} ${t('wallets')} • ${INVOICES.length} ${t('invoices')}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>`;
+    }
+
+    // === الإعدادات ===
+    function renderSettings(el) {
+        el.innerHTML = `
+        <div class="fade-in max-w-2xl mx-auto">
+            <div class="glass-card rounded-3xl shadow-lg overflow-hidden">
+                <div class="gradient-primary p-8 text-white">
+                    <div class="flex items-center gap-4">
+                        <div class="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center">
+                            <i class="fas fa-cog text-3xl"></i>
+                        </div>
+                        <div>
+                            <h2 class="text-2xl font-black">${t('settings')}</h2>
+                            <p class="text-blue-200">${t('app_subtitle')}</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="p-6 space-y-5">
+                    <!-- اللغة -->
+                    <div class="flex items-center justify-between p-4 bg-gray-50 rounded-2xl">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center">
+                                <i class="fas fa-globe text-blue-600"></i>
+                            </div>
+                            <span class="font-bold text-gray-800">${t('language')}</span>
+                        </div>
+                        <div class="flex gap-2">
+                            <button onclick="SETTINGS.lang='ar';saveAll()" class="px-4 py-2 rounded-xl font-bold transition ${SETTINGS.lang === 'ar' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-600'}">${t('arabic')}</button>
+                            <button onclick="SETTINGS.lang='en';saveAll()" class="px-4 py-2 rounded-xl font-bold transition ${SETTINGS.lang === 'en' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-600'}">${t('english')}</button>
+                        </div>
+                    </div>
+                    
+                    <!-- البصمة -->
+                    <div class="flex items-center justify-between p-4 bg-gray-50 rounded-2xl">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 bg-purple-100 rounded-xl flex items-center justify-center">
+                                <i class="fas fa-fingerprint text-purple-600"></i>
+                            </div>
+                            <div>
+                                <span class="font-bold text-gray-800">${t('biometric_protection')}</span>
+                                <p class="text-xs text-gray-500">${t('biometric_prompt')}</p>
+                            </div>
+                        </div>
+                        <div class="toggle-switch ${SETTINGS.biometric ? 'active' : ''}" onclick="SETTINGS.biometric=!SETTINGS.biometric;saveAll()"></div>
+                    </div>
+                    
+                    <!-- النسخ التلقائي -->
+                    <div class="flex items-center justify-between p-4 bg-gray-50 rounded-2xl">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 bg-green-100 rounded-xl flex items-center justify-center">
+                                <i class="fas fa-cloud text-green-600"></i>
+                            </div>
+                            <div>
+                                <span class="font-bold text-gray-800">${t('auto_backup')}</span>
+                            </div>
+                        </div>
+                        <div class="toggle-switch ${SETTINGS.autoBackup ? 'active' : ''}" onclick="SETTINGS.autoBackup=!SETTINGS.autoBackup;saveAll()"></div>
+                    </div>
+                    
+                    <!-- التشفير -->
+                    <div class="flex items-center justify-between p-4 bg-green-50 rounded-2xl border-2 border-green-100">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 bg-green-100 rounded-xl flex items-center justify-center">
+                                <i class="fas fa-shield-alt text-green-600"></i>
+                            </div>
+                            <div>
+                                <span class="font-bold text-green-800">${t('encryption_status')}</span>
+                                <p class="text-xs text-green-600">${t('encryption_active')}</p>
+                            </div>
+                        </div>
+                        <span class="text-green-600 font-bold text-2xl"><i class="fas fa-check-circle"></i></span>
+                    </div>
+                    
+                    <!-- تغيير كلمة المرور -->
+                    <div class="p-4 bg-gray-50 rounded-2xl">
+                        <div class="flex items-center gap-3 mb-4">
+                            <div class="w-10 h-10 bg-amber-100 rounded-xl flex items-center justify-center">
+                                <i class="fas fa-key text-amber-600"></i>
+                            </div>
+                            <span class="font-bold text-gray-800">${t('change_password')}</span>
+                        </div>
+                        <input id="set-oldpass" type="password" placeholder="${t('current_password')}" class="w-full border-2 p-3 rounded-xl mb-3 outline-none focus:border-blue-500">
+                        <input id="set-newpass" type="password" placeholder="${t('new_password')}" class="w-full border-2 p-3 rounded-xl mb-3 outline-none focus:border-blue-500">
+                        <input id="set-confirmpass" type="password" placeholder="${t('confirm_password')}" class="w-full border-2 p-3 rounded-xl mb-4 outline-none focus:border-blue-500">
+                        <button onclick="changePassword()" class="w-full gradient-gold text-white py-3 rounded-xl font-bold shadow-lg hover:opacity-90 transition">${t('save')}</button>
+                    </div>
+                </div>
+            </div>
+        </div>`;
+    }
+
+    function changePassword() {
+        const oldP = document.getElementById('set-oldpass').value;
+        const newP = document.getElementById('set-newpass').value;
+        const confP = document.getElementById('set-confirmpass').value;
+        if (!oldP || !newP || !confP) return showToast(t('fill_fields'), 'error');
+        if (btoa(oldP) !== user.pass) return showToast(t('wrong_credentials'), 'error');
+        if (newP !== confP) return showToast(t('fill_fields'), 'error');
+        const u = DB.find(x => x.id === user.id);
+        u.pass = btoa(newP);
+        user = u;
+        saveAll();
+        showToast(t('save'), 'success');
+    }
+
+    // === عرض حساب العميل (غير المدير) ===
+    function renderClientView(app) {
+        const u = user;
+        const dep = u.log.filter(x => x.type === 'deposit').reduce((s, x) => s + x.amount, 0);
+        const wth = u.log.filter(x => x.type === 'withdraw').reduce((s, x) => s + x.amount, 0);
+        const isRTL = SETTINGS.lang === 'ar';
+
+        app.innerHTML = `
+        <div class="min-h-screen bg-gray-50">
+            <!-- الشريط العلوي -->
+            <header class="bg-white shadow-md p-4 sticky top-0 z-10">
+                <div class="max-w-4xl mx-auto flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 gradient-gold rounded-xl flex items-center justify-center">
+                            <i class="fas fa-coins text-white"></i>
+                        </div>
+                        <div>
+                            <h1 class="text-xl font-bold text-gray-800">${u.name}</h1>
+                            <p class="text-sm text-gray-500">${t('my_account')}</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <button onclick="SETTINGS.lang=SETTINGS.lang==='ar'?'en':'ar';saveAll()" class="p-2 hover:bg-gray-100 rounded-xl transition">
+                            <i class="fas fa-globe text-gray-600"></i>
+                        </button>
+                        <button onclick="logout()" class="bg-red-600 hover:bg-red-700 text-white px-5 py-2.5 rounded-xl font-semibold shadow-md transition">
+                            <i class="fas fa-sign-out-alt me-1"></i>${t('logout')}
+                        </button>
+                    </div>
+                </div>
+            </header>
+            
+            <div class="max-w-4xl mx-auto p-4">
+                <!-- بطاقة الرصيد -->
+                <div class="dark-glass rounded-3xl shadow-2xl p-8 mb-6 text-white">
+                    <div class="flex items-center gap-3 mb-2">
+                        <div class="encrypted-badge"><i class="fas fa-lock"></i> AES-256</div>
+                    </div>
+                    <p class="text-sm text-slate-300 mb-3">${t('total_balance_label')}</p>
+                    <p class="text-6xl font-black mb-6">${fmt(u.balance)}</p>
+                </div>
+                
+                <!-- إحصائيات -->
+                <div class="grid grid-cols-3 gap-4 mb-6">
+                    <div class="glass-card rounded-2xl p-5 shadow-md text-center">
+                        <div class="w-10 h-10 bg-green-100 rounded-xl flex items-center justify-center mx-auto mb-2">
+                            <i class="fas fa-arrow-down text-green-600"></i>
+                        </div>
+                        <p class="text-xs text-gray-500 mb-1">${t('total_deposits')}</p>
+                        <p class="text-xl font-black text-green-600">${fmt(dep)}</p>
+                    </div>
+                    <div class="glass-card rounded-2xl p-5 shadow-md text-center">
+                        <div class="w-10 h-10 bg-red-100 rounded-xl flex items-center justify-center mx-auto mb-2">
+                            <i class="fas fa-arrow-up text-red-600"></i>
+                        </div>
+                        <p class="text-xs text-gray-500 mb-1">${t('total_withdrawals')}</p>
+                        <p class="text-xl font-black text-red-600">${fmt(wth)}</p>
+                    </div>
+                    <div class="glass-card rounded-2xl p-5 shadow-md text-center">
+                        <div class="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center mx-auto mb-2">
+                            <i class="fas fa-receipt text-blue-600"></i>
+                        </div>
+                        <p class="text-xs text-gray-500 mb-1">${t('operations_count')}</p>
+                        <p class="text-xl font-black text-blue-600">${u.log.length}</p>
+                    </div>
+                </div>
+                
+                <!-- الرسم البياني -->
+                <div class="glass-card rounded-3xl shadow-lg p-6 mb-6">
+                    <h3 class="text-lg font-bold text-gray-800 mb-4">${t('monthly_trend')}</h3>
+                    <div style="height:200px"><canvas id="clientChart"></canvas></div>
+                </div>
+                
+                <!-- سجل العمليات -->
+                <div class="glass-card rounded-3xl shadow-lg overflow-hidden">
+                    <div class="p-5 border-b bg-gray-50/80">
+                        <h3 class="font-bold text-lg text-gray-800"><i class="fas fa-history me-2"></i>${t('transaction_log')}</h3>
+                    </div>
+                    <div class="divide-y max-h-[500px] overflow-y-auto scrollbar-thin">
+                        ${u.log.length === 0 ? `<div class="p-16 text-center text-gray-400"><i class="fas fa-inbox text-5xl mb-4 block"></i><p>${t('no_transactions')}</p></div>` :
+                        u.log.map(tr => `
+                            <div class="p-5 hover:bg-gray-50 transition">
+                                <div class="flex items-center justify-between mb-2">
+                                    <div class="flex items-center gap-4">
+                                        <div class="w-12 h-12 ${tr.type === 'deposit' ? 'bg-green-100' : 'bg-red-100'} rounded-2xl flex items-center justify-center">
+                                            <i class="fas ${tr.type === 'deposit' ? 'fa-arrow-down text-green-600' : 'fa-arrow-up text-red-600'} text-lg"></i>
+                                        </div>
+                                        <div>
+                                            <p class="font-bold ${tr.type === 'deposit' ? 'text-green-700' : 'text-red-700'}">${tr.type === 'deposit' ? t('deposit') : t('withdraw')}</p>
+                                            <p class="text-xs text-gray-500">${fmtDate(tr.date)}</p>
+                                        </div>
+                                    </div>
+                                    <p class="text-2xl font-black ${tr.type === 'deposit' ? 'text-green-600' : 'text-red-600'}">${tr.type === 'deposit' ? '+' : '-'}${fmt(tr.amount)}</p>
+                                </div>
+                                ${tr.note ? `<p class="text-sm text-gray-600 ${isRTL ? 'mr-16' : 'ml-16'} bg-gray-50 p-3 rounded-xl">${tr.note}</p>` : ''}
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            </div>
+        </div>`;
+
+        setTimeout(() => {
+            const ctx = document.getElementById('clientChart');
+            if (!ctx) return;
+            const months = [], depD = [], withD = [];
+            for (let i = 5; i >= 0; i--) {
+                const d = new Date(); d.setMonth(d.getMonth() - i);
+                months.push(d.toLocaleDateString(SETTINGS.lang === 'ar' ? 'ar' : 'en', { month: 'short' }));
+                const mT = u.log.filter(tr => { const td = new Date(tr.date); return td.getMonth() === d.getMonth() && td.getFullYear() === d.getFullYear(); });
+                depD.push(mT.filter(tr => tr.type === 'deposit').reduce((s, tr) => s + tr.amount, 0));
+                withD.push(mT.filter(tr => tr.type === 'withdraw').reduce((s, tr) => s + tr.amount, 0));
+            }
+            const chart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: months,
+                    datasets: [
+                        { label: t('total_deposits'), data: depD, backgroundColor: 'rgba(16,185,129,0.8)', borderRadius: 6 },
+                        { label: t('total_withdrawals'), data: withD, backgroundColor: 'rgba(239,68,68,0.8)', borderRadius: 6 }
+                    ]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: { legend: { position: 'top', labels: { font: { family: 'Cairo', size: 11 }, usePointStyle: true } } },
+                    scales: { y: { beginAtZero: true }, x: { grid: { display: false } } }
+                }
+            });
+            activeCharts.push(chart);
+        }, 100);
+    }
+
+    // === بدء التطبيق ===
+    BiometricAuth.check();
+    render();
+
+    // تحديث مؤقت للبيانات كل 5 دقائق
+    setInterval(() => {
+        if (SETTINGS.autoBackup) CloudBackup.autoBackup();
+    }, 300000);
+    </script>
+</body>
+</html>
